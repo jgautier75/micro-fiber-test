@@ -79,7 +79,7 @@ func TestDao(t *testing.T) {
 	db, err := sql.Open("postgres", pgUrl)
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	m, err := migrate.NewWithDatabaseInstance(
-		"file://../../../migrations",
+		"file://../../migrations",
 		"postgres", driver)
 	errMig := m.Up()
 	if errMig != nil {
