@@ -15,10 +15,6 @@ func NewOrgDao() api.OrgDaoInterface {
 }
 
 func (orgRepo *OrgDao) Create(cnxParams string, org model.OrganizationInterface) (int64, error) {
-	/*	conCfg, err := pgx.ParseConfig(cnxParams)
-		if err != nil {
-			return -1, err
-		}*/
 	conn, err := pgx.Connect(context.Background(), cnxParams)
 	if err != nil {
 		return -1, err
