@@ -27,7 +27,7 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 		org.SetLabel(payload.Label)
 		org.SetType(model.OrganizationType(payload.Kind))
 		org.SetStatus(model.OrganizationStatus(payload.Status))
-		id, err := orgSvc.Create(rdbmsUrl, &org)
+		id, err := orgSvc.Create(rdbmsUrl, defaultTenantId, &org)
 		if err != nil {
 			if err.Error() == commons.OrgAlreadyExistsByCode {
 				ctx.SendStatus(fiber.StatusConflict)
@@ -47,7 +47,7 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 	}
 }
 
-func MakeOrgUpdateEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeOrgUpdateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
 		payload := struct {
@@ -58,7 +58,7 @@ func MakeOrgUpdateEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterf
 			apiErr := contracts.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
 		}
-		errUpdate := orgSvc.Update(rdbmsUrl, orgCode, payload.Label)
+		errUpdate := orgSvc.Update(rdbmsUrl, defaultTenantId, orgCode, payload.Label)
 
 		if errUpdate != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
@@ -72,10 +72,10 @@ func MakeOrgUpdateEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterf
 	}
 }
 
-func MakeOrgDeleteEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeOrgDeleteEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
-		_, errFind := orgSvc.FindByCode(rdbmsUrl, orgCode)
+		_, errFind := orgSvc.FindByCode(rdbmsUrl, defaultTenantId, orgCode)
 		if errFind != nil {
 			if errFind.Error() == commons.OrgDoesNotExistByCode {
 				ctx.SendStatus(fiber.StatusNotFound)
@@ -87,7 +87,7 @@ func MakeOrgDeleteEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterf
 				return ctx.JSON(apiErr)
 			}
 		} else {
-			errUpdate := orgSvc.Delete(rdbmsUrl, orgCode)
+			errUpdate := orgSvc.Delete(rdbmsUrl, defaultTenantId, orgCode)
 			if errUpdate != nil {
 				ctx.SendStatus(fiber.StatusInternalServerError)
 				apiErr := contracts.ConvertToInternalError(errUpdate)
@@ -100,10 +100,10 @@ func MakeOrgDeleteEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterf
 	}
 }
 
-func MakeOrgFindByCodeEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeOrgFindByCodeEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
-		org, errFind := orgSvc.FindByCode(rdbmsUrl, orgCode)
+		org, errFind := orgSvc.FindByCode(rdbmsUrl, defaultTenantId, orgCode)
 		if errFind != nil {
 			if errFind.Error() == commons.OrgDoesNotExistByCode {
 				ctx.SendStatus(fiber.StatusNotFound)
@@ -128,9 +128,9 @@ func MakeOrgFindByCodeEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceIn
 	}
 }
 
-func MakeOrgFindAll(dbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeOrgFindAll(dbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
-		orgs, errFindAll := orgSvc.FindAll(dbmsUrl)
+		orgs, errFindAll := orgSvc.FindAll(dbmsUrl, defaultTenantId)
 		if errFindAll != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindAll)
