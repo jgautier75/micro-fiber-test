@@ -98,19 +98,15 @@ func MakeOrgFindByCodeEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceIn
 			apiErr := contracts.ConvertToInternalError(errUpdate)
 			return ctx.JSON(apiErr)
 		} else {
-			payload := struct {
-				Code   string `json:"code"`
-				Label  string `json:"label"`
-				Kind   string `json:"type"`
-				Status int    `json:"status"`
-			}{}
-			payload.Code = org.GetCode()
-			payload.Kind = string(org.GetType())
-			payload.Label = org.GetLabel()
-			payload.Status = int(org.GetStatus())
+			orgResponse := contracts.OrganizationResponse{
+				Code:   org.GetCode(),
+				Label:  org.GetLabel(),
+				Status: int(org.GetStatus()),
+				Kind:   string(org.GetType()),
+			}
 			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
 			ctx.SendStatus(fiber.StatusOK)
-			return ctx.JSON(payload)
+			return ctx.JSON(orgResponse)
 		}
 	}
 }
