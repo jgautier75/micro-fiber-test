@@ -29,7 +29,7 @@ func (orgRepo *OrgDao) Create(cnxParams string, org model.OrganizationInterface)
 	return id, errQuery
 }
 
-func (orgRepo *OrgDao) Update(cnxParams string, org model.OrganizationInterface) error {
+func (orgRepo *OrgDao) Update(cnxParams string, orgCode string, label string) error {
 	conn, err := pgx.Connect(context.Background(), cnxParams)
 	if err != nil {
 		return err
@@ -39,18 +39,18 @@ func (orgRepo *OrgDao) Update(cnxParams string, org model.OrganizationInterface)
 		return err
 	}
 	updateStmt := "update organizations set label=$1 where code=$2"
-	_, errQuery := conn.Exec(context.Background(), updateStmt, org.GetLabel(), org.GetLabel())
+	_, errQuery := conn.Exec(context.Background(), updateStmt, label, orgCode)
 	return errQuery
 }
 
-func (orgRepo *OrgDao) Delete(cnxParams string, id int64) error {
+func (orgRepo *OrgDao) Delete(cnxParams string, orgCode string) error {
 	conn, err := pgx.Connect(context.Background(), cnxParams)
 	if err != nil {
 		return err
 	}
 	defer conn.Close(context.Background())
-	deleteStmt := "delete from organizations where id=$1"
-	_, errQuery := conn.Exec(context.Background(), deleteStmt, id)
+	deleteStmt := "delete from organizations where code=$1"
+	_, errQuery := conn.Exec(context.Background(), deleteStmt, orgCode)
 	return errQuery
 }
 
