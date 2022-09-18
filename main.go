@@ -31,7 +31,9 @@ func main() {
 	app := fiber.New()
 
 	app.Use(logger.New(logger.Config{
-		Format: "[${ip}]:${port} ${status} - ${method} ${path}\n>>>>>>>>>>> Request\n${reqHeaders}\n${body}\n<<<<<<<<<<< Response\n${resBody}",
+		TimeFormat: "2006-01-02T15:04:05-0700",
+		TimeZone:   "UTC",
+		Format:     "[${time}] - [${ip}]:${port} ${status} - ${method} ${path}\n>>>>>>>>>>> Request\n${reqHeaders}\n${body}\n<<<<<<<<<<< Response\n${resBody}",
 	}))
 
 	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(dbUrl, defaultTenantId, orgSvc))
