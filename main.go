@@ -16,7 +16,8 @@ func main() {
 
 	// Setup service & dao
 	orgDao := impl.OrgDao{}
-	orgSvc := svcImpl.NewOrgService(&orgDao)
+	sectorDao := impl.SectorDao{}
+	orgSvc := svcImpl.NewOrgService(&orgDao, &sectorDao)
 
 	// Load config file
 	var k = koanf.New(".")
