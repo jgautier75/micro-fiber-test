@@ -31,12 +31,26 @@ func (orgService *OrganizationService) Create(cnxParams string, organization mod
 	}
 }
 
-func (orgService *OrganizationService) Update(cnxParams string, org model.OrganizationInterface) error {
-	return orgService.dao.Update(cnxParams, org)
+func (orgService *OrganizationService) Update(cnxParams string, orgCode string, label string) error {
+	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, orgCode)
+	if err != nil {
+		return err
+	}
+	if orgExists == false {
+		return errors.New(commons.OrgDoesNotExistByCode)
+	}
+	return orgService.dao.Update(cnxParams, orgCode, label)
 }
 
-func (orgService *OrganizationService) Delete(cnxParams string, id int64) error {
-	return orgService.dao.Delete(cnxParams, id)
+func (orgService *OrganizationService) Delete(cnxParams string, orgCode string) error {
+	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, orgCode)
+	if err != nil {
+		return err
+	}
+	if orgExists == false {
+		return errors.New(commons.OrgDoesNotExistByCode)
+	}
+	return orgService.dao.Delete(cnxParams, orgCode)
 }
 
 func (orgService *OrganizationService) FindByCode(cnxParams string, code string) (model.OrganizationInterface, error) {

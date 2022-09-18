@@ -37,6 +37,8 @@ func main() {
 	}))
 
 	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(dbUrl, defaultTenantId, orgSvc))
+	app.Put("/api/v1/organizations/:orgCode", endpoints.MakeOrgUpdateEndpoint(dbUrl, orgSvc))
+	app.Delete("/api/v1/organizations/:orgCode", endpoints.MakeOrgDeleteEndpoint(dbUrl, orgSvc))
 
 	app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
 }

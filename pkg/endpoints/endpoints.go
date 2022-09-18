@@ -31,27 +31,68 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 		if err != nil {
 			if err.Error() == commons.OrgAlreadyExistsByCode {
 				ctx.SendStatus(fiber.StatusConflict)
-				apiErr := commons.ApiError{
-					Code:    fiber.StatusConflict,
-					Kind:    string(commons.ErrorTypeFunctional),
-					Message: err.Error(),
-				}
+				apiErr := convertToInternalError(err)
 				return ctx.JSON(apiErr)
 			} else {
 				ctx.SendStatus(fiber.StatusInternalServerError)
-				apiErr := commons.ApiError{
-					Code:    fiber.StatusInternalServerError,
-					Kind:    string(commons.ErrorTypeTechnical),
-					Message: err.Error(),
-				}
+				apiErr := convertToInternalError(err)
 				return ctx.JSON(apiErr)
 			}
-
 		} else {
 			ctx.SendStatus(fiber.StatusCreated)
 			idResponse := contracts.IdResponse{ID: id}
 			return ctx.JSON(idResponse)
 		}
 
+	}
+}
+
+func MakeOrgUpdateEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		orgCode := ctx.Params("orgCode")
+		payload := struct {
+			Label string `json:"label"`
+		}{}
+		if err := ctx.BodyParser(&payload); err != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := convertToInternalError(err)
+			return ctx.JSON(apiErr)
+		}
+		errUpdate := orgSvc.Update(rdbmsUrl, orgCode, payload.Label)
+
+		if errUpdate != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := convertToInternalError(errUpdate)
+			return ctx.JSON(apiErr)
+		} else {
+			ctx.SendStatus(fiber.StatusNoContent)
+			return nil
+		}
+
+	}
+}
+
+func MakeOrgDeleteEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		orgCode := ctx.Params("orgCode")
+		errUpdate := orgSvc.Delete(rdbmsUrl, orgCode)
+
+		if errUpdate != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := convertToInternalError(errUpdate)
+			return ctx.JSON(apiErr)
+		} else {
+			ctx.SendStatus(fiber.StatusNoContent)
+			return nil
+		}
+
+	}
+}
+
+func convertToInternalError(err error) commons.ApiError {
+	return commons.ApiError{
+		Code:    fiber.StatusInternalServerError,
+		Kind:    string(commons.ErrorTypeTechnical),
+		Message: err.Error(),
 	}
 }
