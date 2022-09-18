@@ -3,7 +3,6 @@ package commons
 const (
 	ContentTypeHeader      = "Content-Type"
 	ContentTypeJson        = "application/json; charset=utf-8"
-	TechnicalError         = "technical_error"
 	OrgAlreadyExistsByCode = "org_already_exists"
 	OrgDoesNotExistByCode  = "org_does_not_exist"
 )
