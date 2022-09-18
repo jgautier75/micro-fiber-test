@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
@@ -28,6 +29,10 @@ func main() {
 	dbUrl := k.String("app.pgUrl")
 
 	app := fiber.New()
+
+	app.Use(logger.New(logger.Config{
+		Format: "[${ip}]:${port} ${status} - ${method} ${path}\n>>>>>>>>>>> Request\n${reqHeaders}\n${body}\n<<<<<<<<<<< Response\n${resBody}",
+	}))
 
 	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(dbUrl, defaultTenantId, orgSvc))
 
