@@ -1,7 +1,6 @@
 package endpoints
 
 import (
-	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/contracts"
@@ -18,8 +17,9 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 			Status int    `json:"status"`
 		}{}
 		if err := ctx.BodyParser(&payload); err != nil {
-			fmt.Println("error = ", err)
-			return ctx.SendStatus(200)
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(err)
+			return ctx.JSON(apiErr)
 		}
 		org := model.Organization{}
 		org.SetTenantId(defaultTenantId)
