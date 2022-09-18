@@ -40,6 +40,7 @@ func main() {
 	app.Put("/api/v1/organizations/:orgCode", endpoints.MakeOrgUpdateEndpoint(dbUrl, orgSvc))
 	app.Delete("/api/v1/organizations/:orgCode", endpoints.MakeOrgDeleteEndpoint(dbUrl, orgSvc))
 	app.Get("/api/v1/organizations/:orgCode", endpoints.MakeOrgFindByCodeEndpoint(dbUrl, orgSvc))
+	app.Get("/api/v1/organizations", endpoints.MakeOrgFindAll(dbUrl, orgSvc))
 
 	app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
 }

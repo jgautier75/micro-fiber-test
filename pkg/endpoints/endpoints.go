@@ -113,7 +113,35 @@ func MakeOrgFindByCodeEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceIn
 			return ctx.JSON(payload)
 		}
 	}
+}
 
+func MakeOrgFindAll(dbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		orgs, errUpdate := orgSvc.FindAll(dbmsUrl)
+
+		if errUpdate != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := convertToInternalError(errUpdate)
+			return ctx.JSON(apiErr)
+		} else {
+			orgList := make([]OrganizationResponse, len(orgs), len(orgs))
+			for inc, org := range orgs {
+				orgResponse := OrganizationResponse{
+					Code:   org.GetCode(),
+					Label:  org.GetLabel(),
+					Status: int(org.GetStatus()),
+					Kind:   string(org.GetType()),
+				}
+				orgList[inc] = orgResponse
+			}
+			orgListResponse := OrganizationListResponse{
+				Organizations: orgList,
+			}
+			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
+			ctx.SendStatus(fiber.StatusOK)
+			return ctx.JSON(orgListResponse)
+		}
+	}
 }
 
 func convertToInternalError(err error) commons.ApiError {
@@ -122,4 +150,15 @@ func convertToInternalError(err error) commons.ApiError {
 		Kind:    string(commons.ErrorTypeTechnical),
 		Message: err.Error(),
 	}
+}
+
+type OrganizationListResponse struct {
+	Organizations []OrganizationResponse `json:"organizations"`
+}
+
+type OrganizationResponse struct {
+	Code   string `json:"code"`
+	Label  string `json:"label"`
+	Kind   string `json:"type"`
+	Status int    `json:"status"`
 }
