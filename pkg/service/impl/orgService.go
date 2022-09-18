@@ -9,19 +9,32 @@ import (
 )
 
 type OrganizationService struct {
-	dao daoApi.OrgDaoInterface
+	orgDao  daoApi.OrgDaoInterface
+	sectDao daoApi.SectorDaoInterface
 }
 
 func (orgService *OrganizationService) Create(cnxParams string, defaultTenant int64, organization model.OrganizationInterface) (int64, error) {
-	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, organization.GetCode())
+	orgExists, err := orgService.orgDao.ExistsByCode(cnxParams, defaultTenant, organization.GetCode())
 	if err != nil {
 		return 0, err
 	}
 	if orgExists == false {
-		id, createErr := orgService.dao.Create(cnxParams, organization)
+		id, createErr := orgService.orgDao.Create(cnxParams, organization)
 		if createErr != nil {
 			return 0, err
 		} else {
+			sector := model.Sector{}
+			sector.SetLabel(organization.GetLabel())
+			sector.SetCode(organization.GetCode())
+			sector.SetTenantId(defaultTenant)
+			sector.SetSectorStatus(model.SectorStatusActive)
+			sector.SetDepth(0)
+			sector.SetHasParent(false)
+			sector.SetOrgId(id)
+			_, errSector := orgService.sectDao.Create(cnxParams, &sector)
+			if errSector != nil {
+				return 0, err
+			}
 			return id, nil
 		}
 	} else {
@@ -30,46 +43,53 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 }
 
 func (orgService *OrganizationService) Update(cnxParams string, defaultTenant int64, orgCode string, label string) error {
-	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, orgCode)
+	orgExists, err := orgService.orgDao.ExistsByCode(cnxParams, defaultTenant, orgCode)
 	if err != nil {
 		return err
 	}
 	if orgExists == false {
 		return errors.New(commons.OrgDoesNotExistByCode)
 	}
-	return orgService.dao.Update(cnxParams, orgCode, label)
+	return orgService.orgDao.Update(cnxParams, orgCode, label)
 }
 
 func (orgService *OrganizationService) Delete(cnxParams string, defaultTenant int64, orgCode string) error {
-	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, orgCode)
+	orgExists, err := orgService.orgDao.ExistsByCode(cnxParams, defaultTenant, orgCode)
 	if err != nil {
 		return err
 	}
 	if orgExists == false {
 		return errors.New(commons.OrgDoesNotExistByCode)
 	}
-	return orgService.dao.Delete(cnxParams, orgCode)
+	org, err := orgService.orgDao.FindByCode(cnxParams, orgCode)
+	if err != nil {
+		return err
+	}
+	errSector := orgService.sectDao.DeleteByOrgId(cnxParams, org.GetId())
+	if errSector != nil {
+		return errSector
+	}
+	return orgService.orgDao.Delete(cnxParams, orgCode)
 }
 
 func (orgService *OrganizationService) FindByCode(cnxParams string, defaultTenant int64, code string) (model.OrganizationInterface, error) {
-	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, code)
+	orgExists, err := orgService.orgDao.ExistsByCode(cnxParams, defaultTenant, code)
 	if err != nil {
 		return nil, err
 	}
 	if orgExists == false {
 		return nil, errors.New(commons.OrgDoesNotExistByCode)
 	}
-	return orgService.dao.FindByCode(cnxParams, code)
+	return orgService.orgDao.FindByCode(cnxParams, code)
 }
 
 func (orgService *OrganizationService) FindAll(cnxParams string, defaultTenant int64) ([]model.OrganizationInterface, error) {
-	orgs, err := orgService.dao.FindAll(cnxParams, defaultTenant)
+	orgs, err := orgService.orgDao.FindAll(cnxParams, defaultTenant)
 	if err != nil {
 		return nil, err
 	}
 	return orgs, nil
 }
-
-func NewOrgService(daoP daoApi.OrgDaoInterface) svcApi.OrganizationServiceInterface {
-	return &OrganizationService{dao: daoP}
+func NewOrgService(orgDao daoApi.OrgDaoInterface, sectorDao daoApi.SectorDaoInterface) svcApi.OrganizationServiceInterface {
+	return &OrganizationService{orgDao: orgDao, sectDao: sectorDao}
 }
