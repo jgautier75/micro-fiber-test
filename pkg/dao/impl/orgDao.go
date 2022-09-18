@@ -121,6 +121,7 @@ func (orgRepo *OrgDao) FindAll(cnxParams string, tenantId int64) ([]model.Organi
 		org.SetCode(rsCode)
 		org.SetLabel(label)
 		org.SetStatus(model.OrganizationStatus(status))
+		org.SetType(model.OrganizationType(kind))
 		orgs = append(orgs, &org)
 	}
 	return orgs, nil

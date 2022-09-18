@@ -75,15 +75,27 @@ func MakeOrgUpdateEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterf
 func MakeOrgDeleteEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
-		errUpdate := orgSvc.Delete(rdbmsUrl, orgCode)
-
-		if errUpdate != nil {
-			ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errUpdate)
-			return ctx.JSON(apiErr)
+		_, errFind := orgSvc.FindByCode(rdbmsUrl, orgCode)
+		if errFind != nil {
+			if errFind.Error() == commons.OrgDoesNotExistByCode {
+				ctx.SendStatus(fiber.StatusNotFound)
+				apiErr := contracts.ConvertToFunctionalError(errFind, fiber.StatusNotFound)
+				return ctx.JSON(apiErr)
+			} else {
+				ctx.SendStatus(fiber.StatusInternalServerError)
+				apiErr := contracts.ConvertToInternalError(errFind)
+				return ctx.JSON(apiErr)
+			}
 		} else {
-			ctx.SendStatus(fiber.StatusNoContent)
-			return nil
+			errUpdate := orgSvc.Delete(rdbmsUrl, orgCode)
+			if errUpdate != nil {
+				ctx.SendStatus(fiber.StatusInternalServerError)
+				apiErr := contracts.ConvertToInternalError(errUpdate)
+				return ctx.JSON(apiErr)
+			} else {
+				ctx.SendStatus(fiber.StatusNoContent)
+				return nil
+			}
 		}
 	}
 }
@@ -91,12 +103,17 @@ func MakeOrgDeleteEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterf
 func MakeOrgFindByCodeEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
-		org, errUpdate := orgSvc.FindByCode(rdbmsUrl, orgCode)
-
-		if errUpdate != nil {
-			ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errUpdate)
-			return ctx.JSON(apiErr)
+		org, errFind := orgSvc.FindByCode(rdbmsUrl, orgCode)
+		if errFind != nil {
+			if errFind.Error() == commons.OrgDoesNotExistByCode {
+				ctx.SendStatus(fiber.StatusNotFound)
+				apiErr := contracts.ConvertToFunctionalError(errFind, fiber.StatusNotFound)
+				return ctx.JSON(apiErr)
+			} else {
+				ctx.SendStatus(fiber.StatusInternalServerError)
+				apiErr := contracts.ConvertToInternalError(errFind)
+				return ctx.JSON(apiErr)
+			}
 		} else {
 			orgResponse := contracts.OrganizationResponse{
 				Code:   org.GetCode(),

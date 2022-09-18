@@ -1,7 +1,7 @@
 package contracts
 
 import (
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 	"micro-fiber-test/pkg/commons"
 )
 
@@ -9,6 +9,14 @@ func ConvertToInternalError(err error) commons.ApiError {
 	return commons.ApiError{
 		Code:    fiber.StatusInternalServerError,
 		Kind:    string(commons.ErrorTypeTechnical),
+		Message: err.Error(),
+	}
+}
+
+func ConvertToFunctionalError(err error, targetStatus int) commons.ApiError {
+	return commons.ApiError{
+		Code:    targetStatus,
+		Kind:    string(commons.ErrorTypeFunctional),
 		Message: err.Error(),
 	}
 }
