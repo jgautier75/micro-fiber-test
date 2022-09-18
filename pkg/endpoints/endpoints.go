@@ -31,11 +31,11 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 		if err != nil {
 			if err.Error() == commons.OrgAlreadyExistsByCode {
 				ctx.SendStatus(fiber.StatusConflict)
-				apiErr := convertToInternalError(err)
+				apiErr := contracts.ConvertToInternalError(err)
 				return ctx.JSON(apiErr)
 			} else {
 				ctx.SendStatus(fiber.StatusInternalServerError)
-				apiErr := convertToInternalError(err)
+				apiErr := contracts.ConvertToInternalError(err)
 				return ctx.JSON(apiErr)
 			}
 		} else {
@@ -55,14 +55,14 @@ func MakeOrgUpdateEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterf
 		}{}
 		if err := ctx.BodyParser(&payload); err != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := convertToInternalError(err)
+			apiErr := contracts.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
 		}
 		errUpdate := orgSvc.Update(rdbmsUrl, orgCode, payload.Label)
 
 		if errUpdate != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := convertToInternalError(errUpdate)
+			apiErr := contracts.ConvertToInternalError(errUpdate)
 			return ctx.JSON(apiErr)
 		} else {
 			ctx.SendStatus(fiber.StatusNoContent)
@@ -79,7 +79,7 @@ func MakeOrgDeleteEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterf
 
 		if errUpdate != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := convertToInternalError(errUpdate)
+			apiErr := contracts.ConvertToInternalError(errUpdate)
 			return ctx.JSON(apiErr)
 		} else {
 			ctx.SendStatus(fiber.StatusNoContent)
@@ -95,7 +95,7 @@ func MakeOrgFindByCodeEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceIn
 
 		if errUpdate != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := convertToInternalError(errUpdate)
+			apiErr := contracts.ConvertToInternalError(errUpdate)
 			return ctx.JSON(apiErr)
 		} else {
 			payload := struct {
@@ -117,16 +117,15 @@ func MakeOrgFindByCodeEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceIn
 
 func MakeOrgFindAll(dbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
-		orgs, errUpdate := orgSvc.FindAll(dbmsUrl)
-
-		if errUpdate != nil {
+		orgs, errFindAll := orgSvc.FindAll(dbmsUrl)
+		if errFindAll != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := convertToInternalError(errUpdate)
+			apiErr := contracts.ConvertToInternalError(errFindAll)
 			return ctx.JSON(apiErr)
 		} else {
-			orgList := make([]OrganizationResponse, len(orgs), len(orgs))
+			orgList := make([]contracts.OrganizationResponse, len(orgs), len(orgs))
 			for inc, org := range orgs {
-				orgResponse := OrganizationResponse{
+				orgResponse := contracts.OrganizationResponse{
 					Code:   org.GetCode(),
 					Label:  org.GetLabel(),
 					Status: int(org.GetStatus()),
@@ -134,7 +133,7 @@ func MakeOrgFindAll(dbmsUrl string, orgSvc api.OrganizationServiceInterface) fun
 				}
 				orgList[inc] = orgResponse
 			}
-			orgListResponse := OrganizationListResponse{
+			orgListResponse := contracts.OrganizationListResponse{
 				Organizations: orgList,
 			}
 			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
@@ -142,23 +141,4 @@ func MakeOrgFindAll(dbmsUrl string, orgSvc api.OrganizationServiceInterface) fun
 			return ctx.JSON(orgListResponse)
 		}
 	}
-}
-
-func convertToInternalError(err error) commons.ApiError {
-	return commons.ApiError{
-		Code:    fiber.StatusInternalServerError,
-		Kind:    string(commons.ErrorTypeTechnical),
-		Message: err.Error(),
-	}
-}
-
-type OrganizationListResponse struct {
-	Organizations []OrganizationResponse `json:"organizations"`
-}
-
-type OrganizationResponse struct {
-	Code   string `json:"code"`
-	Label  string `json:"label"`
-	Kind   string `json:"type"`
-	Status int    `json:"status"`
 }
