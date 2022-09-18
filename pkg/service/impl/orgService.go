@@ -54,6 +54,13 @@ func (orgService *OrganizationService) Delete(cnxParams string, orgCode string) 
 }
 
 func (orgService *OrganizationService) FindByCode(cnxParams string, code string) (model.OrganizationInterface, error) {
+	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, code)
+	if err != nil {
+		return nil, err
+	}
+	if orgExists == false {
+		return nil, errors.New(commons.OrgDoesNotExistByCode)
+	}
 	return orgService.dao.FindByCode(cnxParams, code)
 }
 
