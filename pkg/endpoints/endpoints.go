@@ -85,8 +85,35 @@ func MakeOrgDeleteEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterf
 			ctx.SendStatus(fiber.StatusNoContent)
 			return nil
 		}
-
 	}
+}
+
+func MakeOrgFindByCodeEndpoint(rdbmsUrl string, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		orgCode := ctx.Params("orgCode")
+		org, errUpdate := orgSvc.FindByCode(rdbmsUrl, orgCode)
+
+		if errUpdate != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := convertToInternalError(errUpdate)
+			return ctx.JSON(apiErr)
+		} else {
+			payload := struct {
+				Code   string `json:"code"`
+				Label  string `json:"label"`
+				Kind   string `json:"type"`
+				Status int    `json:"status"`
+			}{}
+			payload.Code = org.GetCode()
+			payload.Kind = string(org.GetType())
+			payload.Label = org.GetLabel()
+			payload.Status = int(org.GetStatus())
+			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
+			ctx.SendStatus(fiber.StatusOK)
+			return ctx.JSON(payload)
+		}
+	}
+
 }
 
 func convertToInternalError(err error) commons.ApiError {
