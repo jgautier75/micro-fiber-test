@@ -8,13 +8,11 @@ import (
 	svcApi "micro-fiber-test/pkg/service/api"
 )
 
-const defaultTenant int64 = 1
-
 type OrganizationService struct {
 	dao daoApi.OrgDaoInterface
 }
 
-func (orgService *OrganizationService) Create(cnxParams string, organization model.OrganizationInterface) (int64, error) {
+func (orgService *OrganizationService) Create(cnxParams string, defaultTenant int64, organization model.OrganizationInterface) (int64, error) {
 	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, organization.GetCode())
 	if err != nil {
 		return 0, err
@@ -31,7 +29,7 @@ func (orgService *OrganizationService) Create(cnxParams string, organization mod
 	}
 }
 
-func (orgService *OrganizationService) Update(cnxParams string, orgCode string, label string) error {
+func (orgService *OrganizationService) Update(cnxParams string, defaultTenant int64, orgCode string, label string) error {
 	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, orgCode)
 	if err != nil {
 		return err
@@ -42,7 +40,7 @@ func (orgService *OrganizationService) Update(cnxParams string, orgCode string, 
 	return orgService.dao.Update(cnxParams, orgCode, label)
 }
 
-func (orgService *OrganizationService) Delete(cnxParams string, orgCode string) error {
+func (orgService *OrganizationService) Delete(cnxParams string, defaultTenant int64, orgCode string) error {
 	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, orgCode)
 	if err != nil {
 		return err
@@ -53,7 +51,7 @@ func (orgService *OrganizationService) Delete(cnxParams string, orgCode string) 
 	return orgService.dao.Delete(cnxParams, orgCode)
 }
 
-func (orgService *OrganizationService) FindByCode(cnxParams string, code string) (model.OrganizationInterface, error) {
+func (orgService *OrganizationService) FindByCode(cnxParams string, defaultTenant int64, code string) (model.OrganizationInterface, error) {
 	orgExists, err := orgService.dao.ExistsByCode(cnxParams, defaultTenant, code)
 	if err != nil {
 		return nil, err
@@ -64,7 +62,7 @@ func (orgService *OrganizationService) FindByCode(cnxParams string, code string)
 	return orgService.dao.FindByCode(cnxParams, code)
 }
 
-func (orgService *OrganizationService) FindAll(cnxParams string) ([]model.OrganizationInterface, error) {
+func (orgService *OrganizationService) FindAll(cnxParams string, defaultTenant int64) ([]model.OrganizationInterface, error) {
 	orgs, err := orgService.dao.FindAll(cnxParams, defaultTenant)
 	if err != nil {
 		return nil, err
