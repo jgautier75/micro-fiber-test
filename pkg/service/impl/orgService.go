@@ -65,7 +65,11 @@ func (orgService *OrganizationService) FindByCode(cnxParams string, code string)
 }
 
 func (orgService *OrganizationService) FindAll(cnxParams string) ([]model.OrganizationInterface, error) {
-	return orgService.dao.FindAll(cnxParams, defaultTenant)
+	orgs, err := orgService.dao.FindAll(cnxParams, defaultTenant)
+	if err != nil {
+		return nil, err
+	}
+	return orgs, nil
 }
 
 func NewOrgService(daoP daoApi.OrgDaoInterface) svcApi.OrganizationServiceInterface {

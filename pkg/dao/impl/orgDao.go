@@ -109,8 +109,9 @@ func (orgRepo *OrgDao) FindAll(cnxParams string, tenantId int64) ([]model.Organi
 		var tenantId int64
 		var rsCode string
 		var label string
+		var kind string
 		var status int64
-		err = rows.Scan(&id, &tenantId, &rsCode, &label, &status)
+		err = rows.Scan(&id, &tenantId, &rsCode, &label, &kind, &status)
 		if e != nil {
 			return nil, err
 		}
