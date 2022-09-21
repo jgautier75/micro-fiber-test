@@ -14,6 +14,13 @@ func NewOrgDao() api.OrgDaoInterface {
 	return &OrgDao{}
 }
 
+func (orgRepo *OrgDao) CreateInTx(tx pgx.Tx, org model.OrganizationInterface) (int64, error) {
+	var id int64
+	insertStmt := "insert into organizations(tenant_id,code,label,type,status) values($1,$2,$3,$4,$5) returning id"
+	errQuery := tx.QueryRow(context.Background(), insertStmt, org.GetTenantId(), org.GetCode(), org.GetLabel(), org.GetType(), org.GetStatus()).Scan(&id)
+	return id, errQuery
+}
+
 func (orgRepo *OrgDao) Create(cnxParams string, org model.OrganizationInterface) (int64, error) {
 	conn, err := pgx.Connect(context.Background(), cnxParams)
 	if err != nil {

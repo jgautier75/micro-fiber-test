@@ -1,7 +1,9 @@
 package impl
 
 import (
+	"context"
 	"errors"
+	"github.com/jackc/pgx/v4"
 	"micro-fiber-test/pkg/commons"
 	daoApi "micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
@@ -19,8 +21,26 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 		return 0, err
 	}
 	if orgExists == false {
-		id, createErr := orgService.orgDao.Create(cnxParams, organization)
-		if createErr != nil {
+		conn, err := pgx.Connect(context.Background(), cnxParams)
+		if err != nil {
+			return -1, err
+		}
+		defer conn.Close(context.Background())
+
+		tx, err := conn.BeginTx(context.Background(), pgx.TxOptions{AccessMode: pgx.ReadWrite, IsoLevel: pgx.RepeatableRead})
+		if err != nil {
+			return 0, err
+		}
+		defer func() {
+			if err != nil {
+				tx.Rollback(context.Background())
+			} else {
+				tx.Commit(context.Background())
+			}
+		}()
+
+		id, err := orgService.orgDao.CreateInTx(tx, organization)
+		if err != nil {
 			return 0, err
 		} else {
 			sector := model.Sector{}
@@ -31,8 +51,8 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 			sector.SetDepth(0)
 			sector.SetHasParent(false)
 			sector.SetOrgId(id)
-			_, errSector := orgService.sectDao.Create(cnxParams, &sector)
-			if errSector != nil {
+			_, err := orgService.sectDao.CreateInTx(tx, &sector)
+			if err != nil {
 				return 0, err
 			}
 			return id, nil
