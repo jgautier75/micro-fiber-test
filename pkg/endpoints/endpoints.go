@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"github.com/gofiber/fiber/v2"
+	jsoniter "github.com/json-iterator/go"
 	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/contracts"
 	"micro-fiber-test/pkg/model"
@@ -11,12 +12,13 @@ import (
 func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		payload := struct {
-			Code   string `json:"code"`
-			Label  string `json:"label"`
-			Kind   string `json:"type"`
-			Status int    `json:"status"`
+			Code   string  `json:"code"`
+			Label  *string `json:"label"`
+			Kind   string  `json:"type"`
+			Status int     `json:"status"`
 		}{}
-		if err := ctx.BodyParser(&payload); err != nil {
+		var json = jsoniter.ConfigCompatibleWithStandardLibrary
+		if err := json.Unmarshal(ctx.Body(), &payload); err != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
@@ -24,7 +26,9 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 		org := model.Organization{}
 		org.SetTenantId(defaultTenantId)
 		org.SetCode(payload.Code)
-		org.SetLabel(payload.Label)
+		if payload.Label != nil {
+			org.SetLabel(*payload.Label)
+		}
 		org.SetType(model.OrganizationType(payload.Kind))
 		org.SetStatus(model.OrganizationStatus(payload.Status))
 		id, err := orgSvc.Create(rdbmsUrl, defaultTenantId, &org)
