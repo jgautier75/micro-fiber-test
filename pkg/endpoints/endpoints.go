@@ -13,9 +13,9 @@ import (
 func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		payload := struct {
-			Code   *string `json:"code"`
-			Label  *string `json:"label"`
-			Kind   *string `json:"type"`
+			Code   *string `json:"code" validate:"notblank,maxLength(50)"`
+			Label  *string `json:"label" validate:"notblank,maxLength(50)"`
+			Kind   *string `json:"type" validate:"notblank"`
 			Status int     `json:"status"`
 		}{}
 		var json = jsoniter.ConfigCompatibleWithStandardLibrary
@@ -27,8 +27,8 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 
 		validErr := validation.Validate(payload)
 		if validErr != nil && len(validErr) > 0 {
-			apiError := contracts.ConvertValidationError(validErr)
 			ctx.SendStatus(fiber.StatusBadRequest)
+			apiError := contracts.ConvertValidationError(validErr)
 			return ctx.JSON(apiError)
 		}
 
@@ -48,7 +48,7 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 		if err != nil {
 			if err.Error() == commons.OrgAlreadyExistsByCode {
 				ctx.SendStatus(fiber.StatusConflict)
-				apiErr := contracts.ConvertToInternalError(err)
+				apiErr := contracts.ConvertToFunctionalError(err, fiber.StatusConflict)
 				return ctx.JSON(apiErr)
 			} else {
 				ctx.SendStatus(fiber.StatusInternalServerError)

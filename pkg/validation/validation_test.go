@@ -7,16 +7,16 @@ import (
 )
 
 type OrgTest struct {
-	Label string `json:"label" validate:"notblank,maxLength(2)"`
-	Code  string `json:"code" validate:"required"`
-	Kind  int    `json:"int"`
+	Code   string  `json:"code" validate:"notblank,maxLength(50)"`
+	Label  *string `json:"label" validate:"notblank,maxLength(50)"`
+	Kind   string  `json:"type" validate:"notblank"`
+	Status int     `json:"status"`
 }
 
 func TestValidation(t *testing.T) {
 	orgTest := OrgTest{
-		Code:  "code_test",
-		Label: "",
-		Kind:  0,
+		Code: "code_test",
+		Kind: "community",
 	}
 	errors := Validate(orgTest)
 	assert.Truef(t, len(errors) == 1, "One error")
