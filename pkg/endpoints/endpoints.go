@@ -133,13 +133,13 @@ func MakeOrgFindAll(dbmsUrl string, defaultTenantId int64, orgSvc api.Organizati
 			apiErr := contracts.ConvertToInternalError(errFindAll)
 			return ctx.JSON(apiErr)
 		} else {
-			orgList := make([]contracts.OrganizationResponse, len(orgsList), len(orgsList))
+			orgResponseList := make([]contracts.OrganizationResponse, len(orgsList), len(orgsList))
 			for inc, org := range orgsList {
 				orgResponse := converters.ConvertOrgModelToOrgResp(org)
-				orgList[inc] = orgResponse
+				orgResponseList[inc] = orgResponse
 			}
 			orgListResponse := contracts.OrganizationListResponse{
-				Organizations: orgList,
+				Organizations: orgResponseList,
 			}
 			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
 			ctx.SendStatus(fiber.StatusOK)
