@@ -18,5 +18,10 @@ type ApiError struct {
 	Code    int
 	Kind    string
 	Message string
-	Field   *string
+	Details []ApiErrorDetails
+}
+
+type ApiErrorDetails struct {
+	Field  string
+	Detail string
 }

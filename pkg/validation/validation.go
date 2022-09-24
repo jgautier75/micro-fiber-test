@@ -2,6 +2,7 @@ package validation
 
 import (
 	"errors"
+	"fmt"
 	"reflect"
 	"strconv"
 	"strings"
@@ -16,6 +17,7 @@ const (
 	ValidRulePattern      string = "validate"
 	ValidRuleNotBlank     string = "notblank"
 	ValidateRuleMaxLength string = "maxLength"
+	ValidateRuleMinLength string = "minLength"
 	ValidErrorNotBlank    string = "error_not_blank"
 	ValidErrorMaxLength   string = "error_max_length"
 )
@@ -61,6 +63,8 @@ func Validate(obj any) []ErrorValidation {
 									errorsList = append(errorsList, validationError)
 								}
 							}
+						} else {
+							fmt.Printf("Invalid validation expression [%s]", va)
 						}
 					}
 				}
