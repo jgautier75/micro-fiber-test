@@ -5,45 +5,30 @@ import (
 	jsoniter "github.com/json-iterator/go"
 	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/contracts"
-	"micro-fiber-test/pkg/model"
+	"micro-fiber-test/pkg/converters"
+	"micro-fiber-test/pkg/dto/orgs"
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
 )
 
 func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
-		payload := struct {
-			Code   *string `json:"code" validate:"notblank,maxLength(50)"`
-			Label  *string `json:"label" validate:"notblank,maxLength(50)"`
-			Kind   *string `json:"type" validate:"notblank"`
-			Status int     `json:"status"`
-		}{}
+		orgReq := orgs.CreateOrgRequest{}
 		var json = jsoniter.ConfigCompatibleWithStandardLibrary
-		if err := json.Unmarshal(ctx.Body(), &payload); err != nil {
+		if err := json.Unmarshal(ctx.Body(), &orgReq); err != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
 		}
 
-		validErr := validation.Validate(payload)
+		validErr := validation.Validate(orgReq)
 		if validErr != nil && len(validErr) > 0 {
 			ctx.SendStatus(fiber.StatusBadRequest)
 			apiError := contracts.ConvertValidationError(validErr)
 			return ctx.JSON(apiError)
 		}
 
-		org := model.Organization{}
-		org.SetTenantId(defaultTenantId)
-		if payload.Code != nil {
-			org.SetCode(*payload.Code)
-		}
-		if payload.Label != nil {
-			org.SetLabel(*payload.Label)
-		}
-		if payload.Kind != nil {
-			org.SetType(model.OrganizationType(*payload.Kind))
-		}
-		org.SetStatus(model.OrganizationStatus(payload.Status))
+		org := converters.ConvertOrgReqToDaoModel(defaultTenantId, orgReq)
 		id, err := orgSvc.Create(rdbmsUrl, defaultTenantId, &org)
 		if err != nil {
 			if err.Error() == commons.OrgAlreadyExistsByCode {
