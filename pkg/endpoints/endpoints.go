@@ -23,6 +23,7 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 			apiErr := contracts.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
 		}
+
 		org := model.Organization{}
 		org.SetTenantId(defaultTenantId)
 		if payload.Code != nil {
