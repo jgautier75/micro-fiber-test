@@ -53,7 +53,7 @@ type IdResponse struct {
 }
 
 type OrganizationListResponse struct {
-	Organizations []OrganizationResponse `json:"organizations"`
+	Organizations []OrganizationResponse `json:"organizations,omitempty"`
 }
 
 type OrganizationResponse struct {
