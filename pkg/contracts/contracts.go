@@ -28,10 +28,12 @@ func ConvertValidationError(errors []validation.ErrorValidation) commons.ApiErro
 	var details []commons.ApiErrorDetails
 	for _, e := range errors {
 		switch e.Error.Error() {
-		case validation.ValidRuleNotBlank:
+		case validation.ValidErrorNotBlank:
 			s.WriteString("Field is null or empty")
 		case validation.ValidErrorMaxLength:
-			s.WriteString("Field value exceeds max")
+			s.WriteString("Field value exceeds max value")
+		case validation.ValidErrorMinLength:
+			s.WriteString("Field value exceeds min value")
 		default:
 			s.WriteString("Unhandled error type")
 		}
