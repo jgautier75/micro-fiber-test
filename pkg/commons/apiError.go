@@ -5,6 +5,7 @@ const (
 	ContentTypeJson        = "application/json; charset=utf-8"
 	OrgAlreadyExistsByCode = "org_already_exists"
 	OrgDoesNotExistByCode  = "org_does_not_exist"
+	OrgNotFound            = "org_not_found"
 )
 
 type ApiErrorType string

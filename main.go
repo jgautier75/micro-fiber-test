@@ -15,9 +15,10 @@ import (
 func main() {
 
 	// Setup service & dao
-	orgDao := impl.OrgDao{}
-	sectorDao := impl.SectorDao{}
-	orgSvc := svcImpl.NewOrgService(&orgDao, &sectorDao)
+	orgDao := impl.NewOrgDao()
+	sectorDao := impl.NewSectorDao()
+	orgSvc := svcImpl.NewOrgService(orgDao, sectorDao)
+	sectorSvc := svcImpl.NewSectorService(sectorDao)
 
 	// Load config file
 	var k = koanf.New(".")
@@ -37,11 +38,15 @@ func main() {
 		Format:     "[${time}] - [${ip}]:${port} ${status} - ${method} ${path}\n>>>>>>>>>>> Request\n${reqHeaders}\n${body}\n<<<<<<<<<<< Response\n${resBody}",
 	}))
 
+	// Organizations
 	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(dbUrl, defaultTenantId, orgSvc))
 	app.Put("/api/v1/organizations/:orgCode", endpoints.MakeOrgUpdateEndpoint(dbUrl, defaultTenantId, orgSvc))
 	app.Delete("/api/v1/organizations/:orgCode", endpoints.MakeOrgDeleteEndpoint(dbUrl, defaultTenantId, orgSvc))
 	app.Get("/api/v1/organizations/:orgCode", endpoints.MakeOrgFindByCodeEndpoint(dbUrl, defaultTenantId, orgSvc))
 	app.Get("/api/v1/organizations", endpoints.MakeOrgFindAll(dbUrl, defaultTenantId, orgSvc))
+
+	// Sectors
+	app.Get("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorsFindByOrga(dbUrl, defaultTenantId, orgSvc, sectorSvc))
 
 	app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
 }

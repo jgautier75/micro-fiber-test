@@ -23,3 +23,11 @@ func (sectorSvc SectorService) Create(cnxParams string, defautTenantId int64, se
 		return id, nil
 	}
 }
+
+func (sectorSvc SectorService) FindSectorsByTenantOrg(cnxParams string, defaultTenantId int64, orgId int64) ([]model.SectorInterface, error) {
+	sectors, err := sectorSvc.dao.FindSectorsByTenantOrg(cnxParams, defaultTenantId, orgId)
+	if err != nil {
+		return nil, err
+	}
+	return sectors, nil
+}
