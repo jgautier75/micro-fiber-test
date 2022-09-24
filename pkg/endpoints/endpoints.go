@@ -1,12 +1,14 @@
 package endpoints
 
 import (
+	"errors"
 	"github.com/gofiber/fiber/v2"
 	jsoniter "github.com/json-iterator/go"
 	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/contracts"
 	"micro-fiber-test/pkg/converters"
 	"micro-fiber-test/pkg/dto/orgs"
+	"micro-fiber-test/pkg/dto/sectors"
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
 )
@@ -144,6 +146,42 @@ func MakeOrgFindAll(dbmsUrl string, defaultTenantId int64, orgSvc api.Organizati
 			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
 			ctx.SendStatus(fiber.StatusOK)
 			return ctx.JSON(orgListResponse)
+		}
+	}
+}
+
+func MakeSectorsFindByOrga(dbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		orgCode := ctx.Params("orgCode")
+		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		if errFindOrga != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			return ctx.JSON(apiErr)
+		}
+		if org == nil {
+			ctx.SendStatus(fiber.StatusNotFound)
+			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
+			return ctx.JSON(apiErr)
+		}
+
+		sectorsList, errFindAll := sectSvc.FindSectorsByTenantOrg(dbmsUrl, defaultTenantId, org.GetId())
+		if errFindAll != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errFindAll)
+			return ctx.JSON(apiErr)
+		} else {
+			sectorsResponseList := make([]sectors.SectorResponse, len(sectorsList), len(sectorsList))
+			for inc, s := range sectorsList {
+				sgResponse := converters.ConvertSectorModelToSectorResp(s)
+				sectorsResponseList[inc] = sgResponse
+			}
+			sectListResponse := contracts.SectorListResponse{
+				Sectors: sectorsResponseList,
+			}
+			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
+			ctx.SendStatus(fiber.StatusOK)
+			return ctx.JSON(sectListResponse)
 		}
 	}
 }

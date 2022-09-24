@@ -3,6 +3,7 @@ package contracts
 import (
 	"github.com/gofiber/fiber/v2"
 	"micro-fiber-test/pkg/commons"
+	"micro-fiber-test/pkg/dto/sectors"
 	"micro-fiber-test/pkg/validation"
 	"strings"
 )
@@ -61,4 +62,8 @@ type OrganizationResponse struct {
 	Label  string `json:"label"`
 	Kind   string `json:"type"`
 	Status int    `json:"status"`
+}
+
+type SectorListResponse struct {
+	Sectors []sectors.SectorResponse `json:"sectors,omitempty"`
 }
