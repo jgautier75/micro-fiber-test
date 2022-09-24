@@ -117,12 +117,7 @@ func MakeOrgFindByCodeEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc ap
 				return ctx.JSON(apiErr)
 			}
 		} else {
-			orgResponse := contracts.OrganizationResponse{
-				Code:   org.GetCode(),
-				Label:  org.GetLabel(),
-				Status: int(org.GetStatus()),
-				Kind:   string(org.GetType()),
-			}
+			orgResponse := converters.ConvertOrgModelToOrgResp(org)
 			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
 			ctx.SendStatus(fiber.StatusOK)
 			return ctx.JSON(orgResponse)
@@ -132,20 +127,15 @@ func MakeOrgFindByCodeEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc ap
 
 func MakeOrgFindAll(dbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
-		orgs, errFindAll := orgSvc.FindAll(dbmsUrl, defaultTenantId)
+		orgsList, errFindAll := orgSvc.FindAll(dbmsUrl, defaultTenantId)
 		if errFindAll != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindAll)
 			return ctx.JSON(apiErr)
 		} else {
-			orgList := make([]contracts.OrganizationResponse, len(orgs), len(orgs))
-			for inc, org := range orgs {
-				orgResponse := contracts.OrganizationResponse{
-					Code:   org.GetCode(),
-					Label:  org.GetLabel(),
-					Status: int(org.GetStatus()),
-					Kind:   string(org.GetType()),
-				}
+			orgList := make([]contracts.OrganizationResponse, len(orgsList), len(orgsList))
+			for inc, org := range orgsList {
+				orgResponse := converters.ConvertOrgModelToOrgResp(org)
 				orgList[inc] = orgResponse
 			}
 			orgListResponse := contracts.OrganizationListResponse{
