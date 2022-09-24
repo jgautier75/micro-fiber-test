@@ -3,6 +3,7 @@ package contracts
 import (
 	"github.com/gofiber/fiber/v2"
 	"micro-fiber-test/pkg/commons"
+	"micro-fiber-test/pkg/validation"
 	"strings"
 )
 
@@ -22,18 +23,26 @@ func ConvertToFunctionalError(err error, targetStatus int) commons.ApiError {
 	}
 }
 
-func ConvertValidationError(err error, field string) commons.ApiError {
+func ConvertValidationError(errors []validation.ErrorValidation) commons.ApiError {
 	var s strings.Builder
-	s.WriteString("Validation failed for field ")
-	s.WriteString(field)
-	s.WriteString("(")
-	s.WriteString(err.Error())
-	s.WriteString(")")
+	var details []commons.ApiErrorDetails
+	for _, e := range errors {
+		switch e.Error.Error() {
+		case validation.ValidRuleNotBlank:
+			s.WriteString("Field is null or empty")
+		case validation.ValidErrorMaxLength:
+			s.WriteString("Field value exceeds max")
+		default:
+			s.WriteString("Unhandled error type")
+		}
+		details = append(details, commons.ApiErrorDetails{Field: e.Field, Detail: s.String()})
+		s.Reset()
+	}
 	return commons.ApiError{
 		Code:    fiber.StatusBadRequest,
 		Kind:    string(commons.ErrorTypeFunctional),
 		Message: s.String(),
-		Field:   &field,
+		Details: details,
 	}
 }
 

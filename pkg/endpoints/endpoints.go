@@ -7,6 +7,7 @@ import (
 	"micro-fiber-test/pkg/contracts"
 	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/service/api"
+	"micro-fiber-test/pkg/validation"
 )
 
 func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
@@ -22,6 +23,13 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 			ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
+		}
+
+		validErr := validation.Validate(payload)
+		if validErr != nil && len(validErr) > 0 {
+			apiError := contracts.ConvertValidationError(validErr)
+			ctx.SendStatus(fiber.StatusBadRequest)
+			return ctx.JSON(apiError)
 		}
 
 		org := model.Organization{}
