@@ -10,6 +10,8 @@ import (
 type ErrorType string
 
 const (
+	RuleRangeLower        string = "("
+	RuleRangeUpper        string = ")"
 	RulesSeparator        string = ","
 	ValidRulePattern      string = "validate"
 	ValidRuleNotBlank     string = "notblank"
@@ -43,8 +45,8 @@ func Validate(obj any) []ErrorValidation {
 							errorsList = append(errorsList, validationError)
 						}
 					} else if strings.Contains(va, ValidateRuleMaxLength) {
-						posLeftParenthesis := strings.Index(va, "(")
-						posRightParenthesis := strings.Index(va, ")")
+						posLeftParenthesis := strings.Index(va, RuleRangeLower)
+						posRightParenthesis := strings.Index(va, RuleRangeUpper)
 						if posLeftParenthesis > 0 && posRightParenthesis > 0 {
 							maxLengthStr := va[posLeftParenthesis+1 : posRightParenthesis]
 							maxLength, errConvert := strconv.Atoi(maxLengthStr)

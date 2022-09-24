@@ -2,6 +2,7 @@ package validation
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -11,15 +12,13 @@ type OrgTest struct {
 	Kind  int    `json:"int"`
 }
 
-func TestDao(t *testing.T) {
+func TestValidation(t *testing.T) {
 	orgTest := OrgTest{
 		Code:  "code_test",
 		Label: "",
 		Kind:  0,
 	}
 	errors := Validate(orgTest)
-	for _, errValid := range errors {
-		fmt.Printf("Validation error for field [%s]:  [%v]", errValid.Field, errValid.Error)
-	}
-	fmt.Println("Finished")
+	assert.Truef(t, len(errors) == 1, "One error")
+	assert.Truef(t, errors[0].Error.Error() == ValidErrorNotBlank && errors[0].Field == "Label", fmt.Sprintf("Constraint [%s] for field [%s]", ValidErrorNotBlank, "label"))
 }
