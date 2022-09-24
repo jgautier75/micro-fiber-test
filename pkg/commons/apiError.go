@@ -22,6 +22,6 @@ type ApiError struct {
 }
 
 type ApiErrorDetails struct {
-	Field  string
-	Detail string
+	Field  string `json:"field"`
+	Detail string `json:"detail"`
 }
