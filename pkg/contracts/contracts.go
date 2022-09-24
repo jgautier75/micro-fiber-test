@@ -3,6 +3,7 @@ package contracts
 import (
 	"github.com/gofiber/fiber/v2"
 	"micro-fiber-test/pkg/commons"
+	"strings"
 )
 
 func ConvertToInternalError(err error) commons.ApiError {
@@ -18,6 +19,21 @@ func ConvertToFunctionalError(err error, targetStatus int) commons.ApiError {
 		Code:    targetStatus,
 		Kind:    string(commons.ErrorTypeFunctional),
 		Message: err.Error(),
+	}
+}
+
+func ConvertValidationError(err error, field string) commons.ApiError {
+	var s strings.Builder
+	s.WriteString("Validation failed for field ")
+	s.WriteString(field)
+	s.WriteString("(")
+	s.WriteString(err.Error())
+	s.WriteString(")")
+	return commons.ApiError{
+		Code:    fiber.StatusBadRequest,
+		Kind:    string(commons.ErrorTypeFunctional),
+		Message: s.String(),
+		Field:   &field,
 	}
 }
 

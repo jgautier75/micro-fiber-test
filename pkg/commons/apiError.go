@@ -18,4 +18,5 @@ type ApiError struct {
 	Code    int
 	Kind    string
 	Message string
+	Field   *string
 }
