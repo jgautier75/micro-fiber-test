@@ -8,6 +8,7 @@ import (
 	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/contracts"
 	"micro-fiber-test/pkg/converters"
+	dtos "micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/dto/orgs"
 	"micro-fiber-test/pkg/dto/sectors"
 	"micro-fiber-test/pkg/service/api"
@@ -45,7 +46,7 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 			}
 		} else {
 			ctx.SendStatus(fiber.StatusCreated)
-			idResponse := contracts.IdResponse{ID: id}
+			idResponse := dtos.IdResponse{ID: id}
 			return ctx.JSON(idResponse)
 		}
 
@@ -136,12 +137,12 @@ func MakeOrgFindAll(dbmsUrl string, defaultTenantId int64, orgSvc api.Organizati
 			apiErr := contracts.ConvertToInternalError(errFindAll)
 			return ctx.JSON(apiErr)
 		} else {
-			orgResponseList := make([]contracts.OrganizationResponse, len(orgsList), len(orgsList))
+			orgResponseList := make([]orgs.OrganizationResponse, len(orgsList), len(orgsList))
 			for inc, org := range orgsList {
 				orgResponse := converters.ConvertOrgModelToOrgResp(org)
 				orgResponseList[inc] = orgResponse
 			}
-			orgListResponse := contracts.OrganizationListResponse{
+			orgListResponse := orgs.OrganizationListResponse{
 				Organizations: orgResponseList,
 			}
 			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
@@ -177,7 +178,7 @@ func MakeSectorsFindByOrga(dbmsUrl string, defaultTenantId int64, orgSvc api.Org
 				sgResponse := converters.ConvertSectorModelToSectorResp(s)
 				sectorsResponseList[inc] = sgResponse
 			}
-			sectListResponse := contracts.SectorListResponse{
+			sectListResponse := sectors.SectorListResponse{
 				Sectors: sectorsResponseList,
 			}
 			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
@@ -258,7 +259,7 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			return errCreate
 		}
 
-		idResponse := contracts.IdResponse{ID: genId}
+		idResponse := dtos.IdResponse{ID: genId}
 		ctx.SendStatus(fiber.StatusCreated)
 		return ctx.JSON(idResponse)
 	}
