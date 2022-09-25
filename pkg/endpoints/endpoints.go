@@ -3,6 +3,7 @@ package endpoints
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"github.com/gofiber/fiber/v2"
 	jsoniter "github.com/json-iterator/go"
 	"micro-fiber-test/pkg/commons"
@@ -12,6 +13,7 @@ import (
 	"micro-fiber-test/pkg/dto/orgs"
 	"micro-fiber-test/pkg/dto/sectors"
 	"micro-fiber-test/pkg/helpers"
+	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
 )
@@ -34,6 +36,17 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 		}
 
 		org := converters.ConvertOrgReqToDaoModel(defaultTenantId, orgReq)
+		switch org.GetStatus() {
+		case model.OrgStatusDraft, model.OrgStatusActive, model.OrgStatusInactive, model.OrgStatusDeleted:
+		default:
+			ctx.SendStatus(fiber.StatusBadRequest)
+			apiErr := commons.ApiError{
+				Code:    fiber.StatusBadRequest,
+				Kind:    string(commons.ErrorTypeFunctional),
+				Message: fmt.Sprintf("Invalid org status [%d]", orgReq.Status),
+			}
+			return ctx.JSON(apiErr)
+		}
 		id, err := orgSvc.Create(rdbmsUrl, defaultTenantId, &org)
 		if err != nil {
 			if err.Error() == commons.OrgAlreadyExistsByCode {
