@@ -3,7 +3,6 @@ package contracts
 import (
 	"github.com/gofiber/fiber/v2"
 	"micro-fiber-test/pkg/commons"
-	"micro-fiber-test/pkg/dto/sectors"
 	"micro-fiber-test/pkg/validation"
 	"strings"
 )
@@ -47,23 +46,4 @@ func ConvertValidationError(errors []validation.ErrorValidation) commons.ApiErro
 		Message: s.String(),
 		Details: details,
 	}
-}
-
-type IdResponse struct {
-	ID int64 `json:"id"`
-}
-
-type OrganizationListResponse struct {
-	Organizations []OrganizationResponse `json:"organizations,omitempty"`
-}
-
-type OrganizationResponse struct {
-	Code   string `json:"code"`
-	Label  string `json:"label"`
-	Kind   string `json:"type"`
-	Status int    `json:"status"`
-}
-
-type SectorListResponse struct {
-	Sectors []sectors.SectorResponse `json:"sectors,omitempty"`
 }
