@@ -2,12 +2,13 @@ package helpers
 
 import (
 	"fmt"
+	"github.com/stretchr/testify/assert"
 	"micro-fiber-test/pkg/dto/sectors"
 	"micro-fiber-test/pkg/model"
 	"testing"
 )
 
-func TestDao(t *testing.T) {
+func TestSectorHierarchy(t *testing.T) {
 	var secList []sectors.SectorResponse
 	root := sectors.SectorResponse{
 		Id:     1,
@@ -77,5 +78,7 @@ func TestDao(t *testing.T) {
 		fmt.Printf("Sector error [%v]", err)
 	} else {
 		fmt.Printf("Sector hierarchy [%v]", sectorHierarchy)
+		assert.Truef(t, sectorHierarchy.Label == "root", "First sector [%s]", sectorHierarchy.Label)
+		assert.Truef(t, len(sectorHierarchy.Children) == 2, "[%d] children", 2)
 	}
 }
