@@ -4,6 +4,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/validation"
+	"strconv"
 	"strings"
 )
 
@@ -31,9 +32,13 @@ func ConvertValidationError(errors []validation.ErrorValidation) commons.ApiErro
 		case validation.ValidErrorNotBlank:
 			s.WriteString("Field is null or empty")
 		case validation.ValidErrorMaxLength:
-			s.WriteString("Field value exceeds max value")
+			s.WriteString("Field value exceeds max value (")
+			s.WriteString(strconv.Itoa(e.Size))
+			s.WriteString(")")
 		case validation.ValidErrorMinLength:
-			s.WriteString("Field value exceeds min value")
+			s.WriteString("Field value exceeds min value (")
+			s.WriteString(strconv.Itoa(e.Size))
+			s.WriteString(")")
 		default:
 			s.WriteString("Unhandled error type")
 		}
