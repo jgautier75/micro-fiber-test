@@ -11,6 +11,7 @@ import (
 	dtos "micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/dto/orgs"
 	"micro-fiber-test/pkg/dto/sectors"
+	"micro-fiber-test/pkg/helpers"
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
 )
@@ -178,8 +179,12 @@ func MakeSectorsFindByOrga(dbmsUrl string, defaultTenantId int64, orgSvc api.Org
 				sgResponse := converters.ConvertSectorModelToSectorResp(s)
 				sectorsResponseList[inc] = sgResponse
 			}
+			s, err := helpers.BuildSectorsHierarchy(sectorsResponseList)
+			if err != nil {
+				return nil
+			}
 			sectListResponse := sectors.SectorListResponse{
-				Sectors: sectorsResponseList,
+				Sectors: s,
 			}
 			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
 			ctx.SendStatus(fiber.StatusOK)
@@ -191,6 +196,8 @@ func MakeSectorsFindByOrga(dbmsUrl string, defaultTenantId int64, orgSvc api.Org
 func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
+
+		// Ensure organization exists
 		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
@@ -203,6 +210,7 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			return ctx.JSON(apiErr)
 		}
 
+		// Deserialize request
 		sectorReq := orgs.CreateSectorReq{}
 		if err := ctx.BodyParser(&sectorReq); err != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
@@ -210,6 +218,7 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			return ctx.JSON(apiErr)
 		}
 
+		// Validate payload
 		validErr := validation.Validate(sectorReq)
 		if validErr != nil && len(validErr) > 0 {
 			ctx.SendStatus(fiber.StatusBadRequest)
@@ -217,6 +226,7 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			return ctx.JSON(apiError)
 		}
 
+		// Ensure sector's code is not already in use
 		sector, errFindAll := sectSvc.FindByCode(dbmsUrl, defaultTenantId, *sectorReq.Code)
 		if errFindAll != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
