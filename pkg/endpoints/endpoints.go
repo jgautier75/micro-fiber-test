@@ -249,7 +249,7 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			if errParent != nil {
 				return errParent
 			}
-			if parentSector == nil {
+			if parentSector != nil {
 				nillableInt64 := sql.NullInt64{
 					Int64: parentSector.GetId(),
 					Valid: true,
