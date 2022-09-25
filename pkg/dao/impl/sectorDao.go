@@ -118,7 +118,6 @@ func (s SectorDao) FindByCode(cnxParams string, defaultTenantId int64, code stri
 	if err != nil {
 		return nil, err
 	}
-	var sector model.Sector
 	for rows.Next() {
 		var id int64
 		var tenantId int64
@@ -143,8 +142,9 @@ func (s SectorDao) FindByCode(cnxParams string, defaultTenantId int64, code stri
 		sector.SetHasParent(hasParent)
 		sector.SetDepth(depth)
 		sector.SetSectorStatus(status)
+		return &sector, nil
 	}
-	return &sector, nil
+	return nil, nil
 }
 
 func (s SectorDao) FindRootSector(cnxParams string, defaultTenantId int64, orgId int64) (int64, error) {

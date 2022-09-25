@@ -210,6 +210,13 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			return ctx.JSON(apiErr)
 		}
 
+		validErr := validation.Validate(sectorReq)
+		if validErr != nil && len(validErr) > 0 {
+			ctx.SendStatus(fiber.StatusBadRequest)
+			apiError := contracts.ConvertValidationError(validErr)
+			return ctx.JSON(apiError)
+		}
+
 		sector, errFindAll := sectSvc.FindByCode(dbmsUrl, defaultTenantId, *sectorReq.Code)
 		if errFindAll != nil {
 			ctx.SendStatus(fiber.StatusInternalServerError)
