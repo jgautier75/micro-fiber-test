@@ -7,7 +7,6 @@ import (
 )
 
 func BuildSectorsHierarchy(sectors []dtos.SectorResponse) (dtos.SectorResponse, error) {
-
 	var rootSector dtos.SectorResponse
 	for _, sector := range sectors {
 		if sector.Depth == 0 {
@@ -15,14 +14,10 @@ func BuildSectorsHierarchy(sectors []dtos.SectorResponse) (dtos.SectorResponse, 
 			break
 		}
 	}
-
 	if &rootSector == nil {
 		return rootSector, errors.New(commons.SectorRootNotFound)
 	}
-
-	secResponse := fetchRecursively(&rootSector, sectors)
-
-	return secResponse, nil
+	return fetchRecursively(&rootSector, sectors), nil
 }
 
 func fetchRecursively(parentSector *dtos.SectorResponse, sectors []dtos.SectorResponse) dtos.SectorResponse {
