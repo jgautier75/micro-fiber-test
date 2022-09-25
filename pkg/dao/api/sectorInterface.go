@@ -10,4 +10,6 @@ type SectorDaoInterface interface {
 	DeleteByOrgId(cnxParams string, orgId int64) error
 	CreateInTx(tx pgx.Tx, sector model.SectorInterface) (int64, error)
 	FindSectorsByTenantOrg(cnxParams string, defaultTenantId int64, orgId int64) ([]model.SectorInterface, error)
+	FindByCode(cnxParams string, defaultTenantId int64, code string) (model.SectorInterface, error)
+	FindRootSector(cnxParams string, defaultTenantId int64, orgId int64) (int64, error)
 }

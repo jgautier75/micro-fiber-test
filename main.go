@@ -47,6 +47,7 @@ func main() {
 
 	// Sectors
 	app.Get("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorsFindByOrga(dbUrl, defaultTenantId, orgSvc, sectorSvc))
+	app.Post("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorCreateEndpoint(dbUrl, defaultTenantId, orgSvc, sectorSvc))
 
 	app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
 }

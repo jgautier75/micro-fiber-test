@@ -31,3 +31,11 @@ func (sectorSvc SectorService) FindSectorsByTenantOrg(cnxParams string, defaultT
 	}
 	return sectors, nil
 }
+
+func (sectorSvc SectorService) FindByCode(cnxParams string, defaultTenantId int64, code string) (model.SectorInterface, error) {
+	return sectorSvc.dao.FindByCode(cnxParams, defaultTenantId, code)
+}
+
+func (sectorSvc SectorService) FindRootSectorId(cnxParams string, defaultTenantId int64, orgId int64) (int64, error) {
+	return sectorSvc.dao.FindRootSector(cnxParams, defaultTenantId, orgId)
+}
