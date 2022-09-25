@@ -6,6 +6,7 @@ const (
 	OrgAlreadyExistsByCode = "org_already_exists"
 	OrgDoesNotExistByCode  = "org_does_not_exist"
 	OrgNotFound            = "org_not_found"
+	SectorAlreadyExist     = "sector_already_exists"
 )
 
 type ApiErrorType string

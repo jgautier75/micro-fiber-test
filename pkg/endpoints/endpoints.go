@@ -1,6 +1,7 @@
 package endpoints
 
 import (
+	"database/sql"
 	"errors"
 	"github.com/gofiber/fiber/v2"
 	jsoniter "github.com/json-iterator/go"
@@ -183,5 +184,82 @@ func MakeSectorsFindByOrga(dbmsUrl string, defaultTenantId int64, orgSvc api.Org
 			ctx.SendStatus(fiber.StatusOK)
 			return ctx.JSON(sectListResponse)
 		}
+	}
+}
+
+func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		orgCode := ctx.Params("orgCode")
+		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		if errFindOrga != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			return ctx.JSON(apiErr)
+		}
+		if org == nil {
+			ctx.SendStatus(fiber.StatusNotFound)
+			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
+			return ctx.JSON(apiErr)
+		}
+
+		sectorReq := orgs.CreateSectorReq{}
+		if err := ctx.BodyParser(&sectorReq); err != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(err)
+			return ctx.JSON(apiErr)
+		}
+
+		sector, errFindAll := sectSvc.FindByCode(dbmsUrl, defaultTenantId, *sectorReq.Code)
+		if errFindAll != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errFindAll)
+			return ctx.JSON(apiErr)
+		}
+
+		if sector != nil && sector.GetId() > 0 {
+			ctx.SendStatus(fiber.StatusConflict)
+			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.SectorAlreadyExist), fiber.StatusConflict)
+			return ctx.JSON(apiErr)
+		}
+
+		secModel := orgs.ConvertSectorReqToDaoModel(defaultTenantId, sectorReq)
+		secModel.SetOrgId(org.GetId())
+		secModel.SetHasParent(true)
+		if sectorReq.ParentCode != "" {
+			// Find parent sector
+			parentSector, errParent := sectSvc.FindByCode(dbmsUrl, defaultTenantId, sectorReq.ParentCode)
+			if errParent != nil {
+				return errParent
+			}
+			if parentSector == nil {
+				nillableInt64 := sql.NullInt64{
+					Int64: parentSector.GetId(),
+					Valid: true,
+				}
+				secModel.SetParentId(nillableInt64)
+				secModel.SetDepth(parentSector.GetDepth() + 1)
+			}
+		} else {
+			// If parent sector not set, inherits from root
+			rootSector, err := sectSvc.FindRootSectorId(dbmsUrl, defaultTenantId, org.GetId())
+			if err != nil {
+				return err
+			}
+			nillableInt64 := sql.NullInt64{
+				Int64: rootSector,
+				Valid: true,
+			}
+			secModel.SetParentId(nillableInt64)
+			secModel.SetDepth(1)
+		}
+
+		genId, errCreate := sectSvc.Create(dbmsUrl, defaultTenantId, &secModel)
+		if errCreate != nil {
+			return errCreate
+		}
+
+		idResponse := contracts.IdResponse{ID: genId}
+		ctx.SendStatus(fiber.StatusCreated)
+		return ctx.JSON(idResponse)
 	}
 }
