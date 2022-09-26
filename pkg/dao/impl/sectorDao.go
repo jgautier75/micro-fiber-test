@@ -176,3 +176,17 @@ func (s SectorDao) FindRootSector(cnxParams string, defaultTenantId int64, orgId
 	}
 	return sectorId, nil
 }
+
+func (s SectorDao) DeleteSector(cnxParams string, defaultTenantId int64, sectorId int64) error {
+	conn, err := pgx.Connect(context.Background(), cnxParams)
+	if err != nil {
+		return err
+	}
+	defer conn.Close(context.Background())
+	if err != nil {
+		return err
+	}
+	deleteStmt := "delete from sectors where tenant_id=$1 and (id=$2 or parent_id=$3)"
+	_, e := conn.Exec(context.Background(), deleteStmt, defaultTenantId, sectorId, sectorId)
+	return e
+}
