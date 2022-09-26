@@ -3,6 +3,7 @@ package endpoints
 import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
 	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/contracts"
@@ -32,6 +33,8 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 		}
 
 		org := converters.ConvertOrgReqToDaoModel(defaultTenantId, orgReq)
+		codeUUID := uuid.New().String()
+		org.SetCode(codeUUID)
 		switch org.GetStatus() {
 		case model.OrgStatusDraft, model.OrgStatusActive, model.OrgStatusInactive, model.OrgStatusDeleted:
 		default:
@@ -43,7 +46,7 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 			}
 			return ctx.JSON(apiErr)
 		}
-		id, err := orgSvc.Create(rdbmsUrl, defaultTenantId, &org)
+		_, err := orgSvc.Create(rdbmsUrl, defaultTenantId, &org)
 		if err != nil {
 			if err.Error() == commons.OrgAlreadyExistsByCode {
 				ctx.SendStatus(fiber.StatusConflict)
@@ -56,7 +59,7 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 			}
 		} else {
 			ctx.SendStatus(fiber.StatusCreated)
-			idResponse := dtos.IdResponse{ID: id}
+			idResponse := dtos.CodeResponse{Code: codeUUID}
 			return ctx.JSON(idResponse)
 		}
 
