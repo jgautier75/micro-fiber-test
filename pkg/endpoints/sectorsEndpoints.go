@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/contracts"
 	"micro-fiber-test/pkg/converters"
@@ -88,23 +89,11 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			return ctx.JSON(apiError)
 		}
 
-		// Ensure sector's code is not already in use
-		sector, errFindAll := sectSvc.FindByCode(dbmsUrl, defaultTenantId, *sectorReq.Code)
-		if errFindAll != nil {
-			ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errFindAll)
-			return ctx.JSON(apiErr)
-		}
-
-		if sector != nil && sector.GetId() > 0 {
-			ctx.SendStatus(fiber.StatusConflict)
-			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.SectorAlreadyExist), fiber.StatusConflict)
-			return ctx.JSON(apiErr)
-		}
-
 		secModel := orgs.ConvertSectorReqToDaoModel(defaultTenantId, sectorReq)
 		secModel.SetOrgId(org.GetId())
 		secModel.SetHasParent(true)
+		codeUUID := uuid.New().String()
+		secModel.SetCode(codeUUID)
 		if sectorReq.ParentCode != "" {
 			// Find parent sector
 			parentSector, errParent := sectSvc.FindByCode(dbmsUrl, defaultTenantId, sectorReq.ParentCode)
@@ -133,12 +122,12 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			secModel.SetDepth(1)
 		}
 
-		genId, errCreate := sectSvc.Create(dbmsUrl, defaultTenantId, &secModel)
+		_, errCreate := sectSvc.Create(dbmsUrl, defaultTenantId, &secModel)
 		if errCreate != nil {
 			return errCreate
 		}
 
-		idResponse := dtos.IdResponse{ID: genId}
+		idResponse := dtos.CodeResponse{Code: codeUUID}
 		ctx.SendStatus(fiber.StatusCreated)
 		return ctx.JSON(idResponse)
 	}

@@ -8,9 +8,6 @@ import (
 func ConvertOrgReqToDaoModel(defaultTenantId int64, orgReq orgs.CreateOrgRequest) model.Organization {
 	org := model.Organization{}
 	org.SetTenantId(defaultTenantId)
-	if orgReq.Code != nil {
-		org.SetCode(*orgReq.Code)
-	}
 	if orgReq.Label != nil {
 		org.SetLabel(*orgReq.Label)
 	}
