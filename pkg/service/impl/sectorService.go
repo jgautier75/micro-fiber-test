@@ -39,3 +39,7 @@ func (sectorSvc SectorService) FindByCode(cnxParams string, defaultTenantId int6
 func (sectorSvc SectorService) FindRootSectorId(cnxParams string, defaultTenantId int64, orgId int64) (int64, error) {
 	return sectorSvc.dao.FindRootSector(cnxParams, defaultTenantId, orgId)
 }
+
+func (sectorSvc SectorService) DeleteSector(cnxParams string, defaultTenantId int64, sectorId int64) error {
+	return sectorSvc.dao.DeleteSector(cnxParams, defaultTenantId, sectorId)
+}
