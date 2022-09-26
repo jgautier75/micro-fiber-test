@@ -17,8 +17,10 @@ func main() {
 	// Setup service & dao
 	orgDao := impl.NewOrgDao()
 	sectorDao := impl.NewSectorDao()
+	userDao := impl.NewUserDao()
 	orgSvc := svcImpl.NewOrgService(orgDao, sectorDao)
 	sectorSvc := svcImpl.NewSectorService(sectorDao)
+	userSvc := svcImpl.NewUserService(userDao)
 
 	// Load config file
 	var k = koanf.New(".")
@@ -50,5 +52,7 @@ func main() {
 	app.Post("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorCreateEndpoint(dbUrl, defaultTenantId, orgSvc, sectorSvc))
 	app.Delete("/api/v1/organizations/:orgCode/sectors/:sectorCode", endpoints.MakeSectorDeleteEndpoint(dbUrl, defaultTenantId, orgSvc, sectorSvc))
 
+	// Users
+	app.Post("/api/v1/organizations/:orgCode/users", endpoints.MakeUserCreateEndpoint(dbUrl, defaultTenantId, userSvc, orgSvc))
 	app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
 }
