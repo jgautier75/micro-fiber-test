@@ -54,5 +54,7 @@ func main() {
 
 	// Users
 	app.Post("/api/v1/organizations/:orgCode/users", endpoints.MakeUserCreateEndpoint(dbUrl, defaultTenantId, userSvc, orgSvc))
+	app.Get("/api/v1/organizations/:orgCode/users", endpoints.MakeUserSearchFilter(dbUrl, defaultTenantId, userSvc, orgSvc))
+
 	app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
 }
