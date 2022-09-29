@@ -13,6 +13,7 @@ import (
 	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
+	"strconv"
 )
 
 func MakeUserCreateEndpoint(dbmsUrl string, defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
@@ -91,6 +92,18 @@ func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.Use
 		userFilterCriteria.Email = email
 		login := ctx.Query("login", "")
 		userFilterCriteria.Login = login
+		rowsPerPageStr := ctx.Query("rows", "5")
+		rowsPerPage, errConvert := strconv.Atoi(rowsPerPageStr)
+		if errConvert != nil {
+			return errConvert
+		}
+		userFilterCriteria.RowsPerPage = rowsPerPage
+		pageStr := ctx.Query("page", "1")
+		curPage, errPage := strconv.Atoi(pageStr)
+		if errPage != nil {
+			return errPage
+		}
+		userFilterCriteria.Page = curPage
 
 		usersCriteria, errFind := userSvc.FindByCriteria(dbmsUrl, userFilterCriteria)
 		if errFind != nil {
