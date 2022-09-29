@@ -23,3 +23,7 @@ func (u UserService) Create(cnxParams string, defautTenantId int64, user model.U
 		return id, nil
 	}
 }
+
+func (u UserService) FindByCriteria(cnxParams string, criteria model.UserFilterCriteria) ([]model.UserInterface, error) {
+	return u.dao.FindByCriteria(cnxParams, criteria)
+}

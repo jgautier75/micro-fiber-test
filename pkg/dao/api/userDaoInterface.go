@@ -6,4 +6,5 @@ import (
 
 type UserDaoInterface interface {
 	Create(cnxParams string, user model.UserInterface) (int64, error)
+	FindByCriteria(cnxParams string, criteria model.UserFilterCriteria) ([]model.UserInterface, error)
 }
