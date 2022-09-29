@@ -70,9 +70,20 @@ func (u UserDao) FindByCriteria(cnxParams string, criteria model.UserFilterCrite
 		strBuf.WriteString(fmt.Sprintf(" and first_name=%s", "%"+strconv.Itoa(inc)))
 	}
 
-	strBuf.WriteString(" order by last_name,first_name")
+	strBuf.WriteString(" order by  last_name,first_name asc")
 
-	rows, errQuery := conn.Query(context.Background(), strBuf.String(), values...)
+	if criteria.Page > 1 {
+		startPg := (criteria.Page - 1) * criteria.RowsPerPage
+		strBuf.WriteString(" offset ")
+		strBuf.WriteString(strconv.Itoa(startPg))
+	}
+
+	strBuf.WriteString(" limit ")
+	strBuf.WriteString(strconv.Itoa(criteria.RowsPerPage))
+
+	query := strBuf.String()
+
+	rows, errQuery := conn.Query(context.Background(), query, values...)
 	if errQuery != nil {
 		return nil, errQuery
 	}
