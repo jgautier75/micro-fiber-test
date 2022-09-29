@@ -7,6 +7,7 @@ import (
 	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/contracts"
 	"micro-fiber-test/pkg/converters"
+	commonsDto "micro-fiber-test/pkg/dto/commons"
 	dtos "micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/dto/users"
 	usersResponses "micro-fiber-test/pkg/dto/users"
@@ -110,14 +111,25 @@ func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.Use
 			return errFind
 		}
 
-		usersArray := make([]usersResponses.UserResponse, len(usersCriteria), len(usersCriteria))
-		for inc, u := range usersCriteria {
+		usersArray := make([]usersResponses.UserResponse, len(usersCriteria.Users), len(usersCriteria.Users))
+		for inc, u := range usersCriteria.Users {
 			usrResponse := converters.ConvertFromDaoModelToUserResponse(u)
 			usersArray[inc] = usrResponse
 		}
 
+		pageResp := commonsDto.Pagination{
+			Page:  curPage,
+			Count: usersCriteria.NbResults,
+		}
+		totalPages := 1
+		if usersCriteria.NbResults >= rowsPerPage {
+			totalPages = usersCriteria.NbResults/rowsPerPage + 1
+		}
+		pageResp.Total = totalPages
+
 		userListReponse := usersResponses.UserListResponse{
-			Users: usersArray,
+			Users:      usersArray,
+			Pagination: pageResp,
 		}
 
 		ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
