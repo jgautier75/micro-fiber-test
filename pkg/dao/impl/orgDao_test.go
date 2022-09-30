@@ -61,7 +61,12 @@ func TestDao(t *testing.T) {
 			ContainerRequest: containerReq,
 			Started:          true,
 		})
-	defer dbContainer.Terminate(ctx)
+	defer func(dbContainer testcontainers.Container, ctx context.Context) {
+		err := dbContainer.Terminate(ctx)
+		if err != nil {
+
+		}
+	}(dbContainer, ctx)
 
 	errLogProd := dbContainer.StartLogProducer(ctx)
 	if errLogProd != nil {
