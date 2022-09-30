@@ -9,4 +9,5 @@ type UserDaoInterface interface {
 	FindByCode(cnxParams string, tenantId int64, orgId int64, externalId string) (model.UserInterface, error)
 	FindByCriteria(cnxParams string, criteria model.UserFilterCriteria) (model.UserSearchResult, error)
 	CountByCriteria(cnxParams string, criteria model.UserFilterCriteria) (int, error)
+	Update(cnxParams string, user model.UserInterface) error
 }

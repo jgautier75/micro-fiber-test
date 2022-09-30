@@ -32,6 +32,23 @@ func (u UserDao) Create(cnxParams string, user model.UserInterface) (int64, erro
 	return id, errQuery
 }
 
+func (u UserDao) Update(cnxParams string, user model.UserInterface) error {
+	conn, err := pgx.Connect(context.Background(), cnxParams)
+	if err != nil {
+		return err
+	}
+	defer conn.Close(context.Background())
+	if err != nil {
+		return err
+	}
+	updateStmt := "update users set last_name=$1,first_name=$2,middle_name=$3 where external_id=$4"
+	_, errQuery := conn.Exec(context.Background(), updateStmt, user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetExternalId())
+	if errQuery != nil {
+		return errQuery
+	}
+	return nil
+}
+
 func (u UserDao) CountByCriteria(cnxParams string, criteria model.UserFilterCriteria) (int, error) {
 	conn, err := pgx.Connect(context.Background(), cnxParams)
 	if err != nil {

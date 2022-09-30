@@ -9,6 +9,7 @@ const (
 	SectorAlreadyExist     = "sector_already_exists"
 	SectorRootNotFound     = "sector_root_not_found"
 	SectorNotFound         = "sector_not_found"
+	UserNotFound           = "user_not_found"
 )
 
 type ApiErrorType string
