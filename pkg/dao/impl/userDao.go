@@ -3,7 +3,6 @@ package impl
 import (
 	"context"
 	"fmt"
-	pgx2 "github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4"
 	"micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
@@ -23,7 +22,7 @@ func (u UserDao) Create(cnxParams string, user model.UserInterface) (int64, erro
 	if err != nil {
 		return -1, err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -43,7 +42,7 @@ func (u UserDao) Update(cnxParams string, user model.UserInterface) error {
 	if err != nil {
 		return err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -65,7 +64,7 @@ func (u UserDao) CountByCriteria(cnxParams string, criteria model.UserFilterCrit
 	if err != nil {
 		return 0, err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -98,7 +97,7 @@ func (u UserDao) FindByCriteria(cnxParams string, criteria model.UserFilterCrite
 	if err != nil {
 		return searchResults, err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -161,12 +160,12 @@ func (u UserDao) FindByCriteria(cnxParams string, criteria model.UserFilterCrite
 	return searchResults, nil
 }
 
-func (u UserDao) FindByCode(cnxParams string, tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
+func (u UserDao) FindByExternalId(cnxParams string, tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
 	conn, err := pgx.Connect(context.Background(), cnxParams)
 	if err != nil {
 		return nil, err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -214,7 +213,7 @@ func (u UserDao) IsLoginInUse(cnxParams string, login string) (int64, string, er
 	if err != nil {
 		return 0, "", err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -247,7 +246,7 @@ func (u UserDao) IsEmailInUse(cnxParams string, email string) (int64, string, er
 	if err != nil {
 		return 0, "", err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -306,4 +305,27 @@ func computeFindByCriteriaQuery(qryPrefix string, criteria model.UserFilterCrite
 	}
 	fullQry := buf.String()
 	return fullQry, values
+}
+
+func (u UserDao) Delete(cnxParams string, userExtId string) error {
+	conn, err := pgx.Connect(context.Background(), cnxParams)
+	if err != nil {
+		return err
+	}
+	defer func(conn *pgx.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
+	if err != nil {
+		return err
+	}
+	selStmt := "delete from users where external_id=$1"
+	rows, errQuery := conn.Query(context.Background(), selStmt, userExtId)
+	defer rows.Close()
+	if errQuery != nil {
+		return errQuery
+	}
+	return nil
 }

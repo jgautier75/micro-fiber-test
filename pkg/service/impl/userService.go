@@ -82,5 +82,9 @@ func (u UserService) FindByCriteria(cnxParams string, criteria model.UserFilterC
 }
 
 func (u UserService) FindByCode(cnxParams string, tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
-	return u.dao.FindByCode(cnxParams, tenantId, orgId, externalId)
+	return u.dao.FindByExternalId(cnxParams, tenantId, orgId, externalId)
+}
+
+func (u UserService) Delete(cnxParams string, externalId string) error {
+	return u.dao.Delete(cnxParams, externalId)
 }

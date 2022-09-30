@@ -155,6 +155,45 @@ func MakeUserFindByCode(dbmsUrl string, defaultTenantId int64, userSvc api.UserS
 	}
 }
 
+func MakeUserDelete(dbmsUrl string, defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		orgCode := ctx.Params("orgCode")
+
+		// Ensure organization exists
+		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		if errFindOrga != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			return ctx.JSON(apiErr)
+		}
+		if org == nil {
+			_ = ctx.SendStatus(fiber.StatusNotFound)
+			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
+			return ctx.JSON(apiErr)
+		}
+
+		usrId := ctx.Params("userId")
+		u, errFind := userSvc.FindByCode(dbmsUrl, defaultTenantId, org.GetId(), usrId)
+		if errFind != nil {
+			return errFind
+		}
+		if u == nil {
+			_ = ctx.SendStatus(fiber.StatusNotFound)
+			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.UserNotFound), fiber.StatusNotFound)
+			return ctx.JSON(apiErr)
+		}
+
+		errDel := userSvc.Delete(dbmsUrl, usrId)
+		if errDel != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			return ctx.JSON(apiErr)
+		}
+		_ = ctx.SendStatus(fiber.StatusNoContent)
+		return nil
+	}
+}
+
 func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")

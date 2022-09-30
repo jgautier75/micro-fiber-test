@@ -2,7 +2,6 @@ package impl
 
 import (
 	"context"
-	pgx2 "github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4"
 	"micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
@@ -27,7 +26,7 @@ func (orgRepo *OrgDao) Create(cnxParams string, org model.OrganizationInterface)
 	if err != nil {
 		return -1, err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -47,7 +46,7 @@ func (orgRepo *OrgDao) Update(cnxParams string, orgCode string, label string) er
 	if err != nil {
 		return err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -66,7 +65,7 @@ func (orgRepo *OrgDao) Delete(cnxParams string, orgCode string) error {
 	if err != nil {
 		return err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -82,7 +81,7 @@ func (orgRepo *OrgDao) FindByCode(cnxParams string, code string) (model.Organiza
 	if err != nil {
 		return nil, err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -123,7 +122,7 @@ func (orgRepo *OrgDao) FindAll(cnxParams string, tenantId int64) ([]model.Organi
 	if err != nil {
 		return nil, err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
@@ -165,7 +164,7 @@ func (orgRepo *OrgDao) ExistsByCode(cnxParams string, tenantId int64, code strin
 	if err != nil {
 		return false, err
 	}
-	defer func(conn *pgx2.Conn, ctx context.Context) {
+	defer func(conn *pgx.Conn, ctx context.Context) {
 		err := conn.Close(ctx)
 		if err != nil {
 
