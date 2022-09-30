@@ -10,6 +10,8 @@ const (
 	SectorRootNotFound     = "sector_root_not_found"
 	SectorNotFound         = "sector_not_found"
 	UserNotFound           = "user_not_found"
+	UserLoginAlreadyInUse  = "user_login_already_in_use"
+	UserEmailAlreadyInUse  = "user_email_already_in_use"
 )
 
 type ApiErrorType string

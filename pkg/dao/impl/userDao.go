@@ -41,8 +41,8 @@ func (u UserDao) Update(cnxParams string, user model.UserInterface) error {
 	if err != nil {
 		return err
 	}
-	updateStmt := "update users set last_name=$1,first_name=$2,middle_name=$3 where external_id=$4"
-	_, errQuery := conn.Exec(context.Background(), updateStmt, user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetExternalId())
+	updateStmt := "update users set last_name=$1,first_name=$2,middle_name=$3,login=$4,email=$5 where external_id=$6"
+	_, errQuery := conn.Exec(context.Background(), updateStmt, user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetExternalId())
 	if errQuery != nil {
 		return errQuery
 	}
@@ -181,6 +181,61 @@ func (u UserDao) FindByCode(cnxParams string, tenantId int64, orgId int64, exter
 		return &userInterface, nil
 	}
 	return &userInterface, nil
+}
+
+func (u UserDao) IsLoginInUse(cnxParams string, login string) (int64, string, error) {
+	conn, err := pgx.Connect(context.Background(), cnxParams)
+	if err != nil {
+		return 0, "", err
+	}
+	defer conn.Close(context.Background())
+	if err != nil {
+		return 0, "", err
+	}
+	selStmt := "select id,external_id from users where login=$1"
+
+	rows, errQuery := conn.Query(context.Background(), selStmt, login)
+	defer rows.Close()
+	if errQuery != nil {
+		return 0, "", errQuery
+	}
+	for rows.Next() {
+		var id int64
+		var extId string
+		err = rows.Scan(&id, &extId)
+		if err != nil {
+			return 0, "", err
+		}
+		return id, extId, nil
+	}
+	return 0, "", nil
+}
+
+func (u UserDao) IsEmailInUse(cnxParams string, email string) (int64, string, error) {
+	conn, err := pgx.Connect(context.Background(), cnxParams)
+	if err != nil {
+		return 0, "", err
+	}
+	defer conn.Close(context.Background())
+	if err != nil {
+		return 0, "", err
+	}
+	selStmt := "select id,external_id from users where email=$1"
+	rows, errQuery := conn.Query(context.Background(), selStmt, email)
+	defer rows.Close()
+	if errQuery != nil {
+		return 0, "", errQuery
+	}
+	for rows.Next() {
+		var id int64
+		var extId string
+		err = rows.Scan(&id, &extId)
+		if err != nil {
+			return 0, "", err
+		}
+		return id, extId, nil
+	}
+	return 0, "", nil
 }
 
 func computeFindByCriteriaQuery(qryPrefix string, criteria model.UserFilterCriteria) (string string, params []interface{}) {

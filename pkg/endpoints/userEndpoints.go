@@ -52,13 +52,23 @@ func MakeUserCreateEndpoint(dbmsUrl string, defaultTenantId int64, userSvc api.U
 
 		usrModel := converters.ConvertUserReqToDaoModel(defaultTenantId, userReq)
 		usrModel.SetOrgId(org.GetId())
-		codeUUID := uuid.New().String()
-		usrModel.SetExternalId(codeUUID)
+		extUUID := uuid.New().String()
+		usrModel.SetExternalId(extUUID)
 		_, errCreate := userSvc.Create(dbmsUrl, defaultTenantId, &usrModel)
 		if errCreate != nil {
-			return errCreate
+			if errCreate != nil {
+				if errCreate.Error() == commons.UserLoginAlreadyInUse || errCreate.Error() == commons.UserEmailAlreadyInUse {
+					apiError := contracts.ConvertToFunctionalError(errCreate, fiber.StatusConflict)
+					ctx.SendStatus(fiber.StatusConflict)
+					return ctx.JSON(apiError)
+				}
+			} else {
+				apiError := contracts.ConvertToInternalError(errCreate)
+				ctx.SendStatus(fiber.StatusInternalServerError)
+				return ctx.JSON(apiError)
+			}
 		}
-		idResponse := dtos.CodeResponse{Code: codeUUID}
+		idResponse := dtos.ExternalIdResponse{ID: extUUID}
 		ctx.SendStatus(fiber.StatusCreated)
 		return ctx.JSON(idResponse)
 	}
@@ -169,7 +179,9 @@ func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 		}
 
 		if u == nil {
-			return errors.New(commons.UserNotFound)
+			apiError := contracts.ConvertToFunctionalError(errors.New(commons.UserNotFound), fiber.StatusNotFound)
+			ctx.SendStatus(fiber.StatusNotFound)
+			return ctx.JSON(apiError)
 		}
 
 		// Deserialize request
@@ -190,10 +202,15 @@ func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 
 		usrModel := converters.ConvertUserUpdateReqToDaoModel(defaultTenantId, userReq)
 		usrModel.SetOrgId(org.GetId())
+		usrModel.SetExternalId(usrId)
 
 		errUpdate := userSvc.Update(dbmsUrl, &usrModel)
 		if errUpdate != nil {
-			return errUpdate
+			if errUpdate.Error() == commons.UserLoginAlreadyInUse || errUpdate.Error() == commons.UserEmailAlreadyInUse {
+				apiError := contracts.ConvertToFunctionalError(errUpdate, fiber.StatusConflict)
+				ctx.SendStatus(fiber.StatusConflict)
+				return ctx.JSON(apiError)
+			}
 		}
 
 		return ctx.SendStatus(fiber.StatusNoContent)
