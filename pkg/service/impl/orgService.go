@@ -3,6 +3,7 @@ package impl
 import (
 	"context"
 	"errors"
+	pgx2 "github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4"
 	"micro-fiber-test/pkg/commons"
 	daoApi "micro-fiber-test/pkg/dao/api"
@@ -25,7 +26,12 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 		if err != nil {
 			return -1, err
 		}
-		defer conn.Close(context.Background())
+		defer func(conn *pgx2.Conn, ctx context.Context) {
+			err := conn.Close(ctx)
+			if err != nil {
+
+			}
+		}(conn, context.Background())
 
 		tx, err := conn.BeginTx(context.Background(), pgx.TxOptions{AccessMode: pgx.ReadWrite, IsoLevel: pgx.RepeatableRead})
 		if err != nil {
@@ -33,9 +39,15 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 		}
 		defer func() {
 			if err != nil {
-				tx.Rollback(context.Background())
+				err := tx.Rollback(context.Background())
+				if err != nil {
+					return
+				}
 			} else {
-				tx.Commit(context.Background())
+				err := tx.Commit(context.Background())
+				if err != nil {
+					return
+				}
 			}
 		}()
 
