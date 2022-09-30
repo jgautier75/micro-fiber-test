@@ -24,6 +24,10 @@ func (u UserService) Create(cnxParams string, defautTenantId int64, user model.U
 	}
 }
 
+func (u UserService) Update(cnxParams string, user model.UserInterface) error {
+	return u.dao.Update(cnxParams, user)
+}
+
 func (u UserService) FindByCriteria(cnxParams string, criteria model.UserFilterCriteria) (model.UserSearchResult, error) {
 	userSearchResult, err := u.dao.FindByCriteria(cnxParams, criteria)
 	if err != nil {

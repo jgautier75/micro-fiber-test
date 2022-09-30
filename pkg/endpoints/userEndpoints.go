@@ -145,6 +145,61 @@ func MakeUserFindByCode(dbmsUrl string, defaultTenantId int64, userSvc api.UserS
 	}
 }
 
+func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		orgCode := ctx.Params("orgCode")
+
+		// Ensure organization exists
+		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		if errFindOrga != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			return ctx.JSON(apiErr)
+		}
+		if org == nil {
+			ctx.SendStatus(fiber.StatusNotFound)
+			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
+			return ctx.JSON(apiErr)
+		}
+
+		usrId := ctx.Params("userId")
+		u, errFind := userSvc.FindByCode(dbmsUrl, defaultTenantId, org.GetId(), usrId)
+		if errFind != nil {
+			return errFind
+		}
+
+		if u == nil {
+			return errors.New(commons.UserNotFound)
+		}
+
+		// Deserialize request
+		userReq := users.UpdateUserReq{}
+		if err := ctx.BodyParser(&userReq); err != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(err)
+			return ctx.JSON(apiErr)
+		}
+
+		// Validate payload
+		validErr := validation.Validate(userReq)
+		if validErr != nil && len(validErr) > 0 {
+			ctx.SendStatus(fiber.StatusBadRequest)
+			apiError := contracts.ConvertValidationError(validErr)
+			return ctx.JSON(apiError)
+		}
+
+		usrModel := converters.ConvertUserUpdateReqToDaoModel(defaultTenantId, userReq)
+		usrModel.SetOrgId(org.GetId())
+
+		errUpdate := userSvc.Update(dbmsUrl, &usrModel)
+		if errUpdate != nil {
+			return errUpdate
+		}
+
+		return ctx.SendStatus(fiber.StatusNoContent)
+	}
+}
+
 func buildCriteria(org model.OrganizationInterface, ctx *fiber.Ctx) (model.UserFilterCriteria, error) {
 	userFilterCriteria := model.UserFilterCriteria{}
 	userFilterCriteria.OrgId = org.GetId()

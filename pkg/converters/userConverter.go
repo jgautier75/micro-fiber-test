@@ -19,6 +19,17 @@ func ConvertUserReqToDaoModel(defaultTenantId int64, userReq users.CreateUserReq
 	return usr
 }
 
+func ConvertUserUpdateReqToDaoModel(defaultTenantId int64, userReq users.UpdateUserReq) model.User {
+	usr := model.User{}
+	usr.SetTenantId(defaultTenantId)
+	usr.SetLastName(userReq.LastName)
+	usr.SetFirstName(userReq.FirstName)
+	if userReq.MiddleName != nil {
+		usr.SetMiddleName(*userReq.MiddleName)
+	}
+	return usr
+}
+
 func ConvertFromDaoModelToUserResponse(userInterface model.UserInterface) users.UserResponse {
 	usr := users.UserResponse{}
 	usr.ExternalId = userInterface.GetExternalId()

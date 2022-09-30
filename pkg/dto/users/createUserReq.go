@@ -8,3 +8,9 @@ type CreateUserReq struct {
 	Email      string  `json:"email" validate:"notblank,maxLength(50)"`
 	Status     int     `json:"status"`
 }
+
+type UpdateUserReq struct {
+	LastName   string  `json:"lastName" validate:"notblank,maxLength(50)"`
+	FirstName  string  `json:"firstName" validate:"notblank,maxLength(50)"`
+	MiddleName *string `json:"middleName"`
+}
