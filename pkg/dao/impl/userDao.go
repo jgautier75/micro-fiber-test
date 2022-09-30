@@ -3,6 +3,7 @@ package impl
 import (
 	"context"
 	"fmt"
+	pgx2 "github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4"
 	"micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
@@ -22,7 +23,12 @@ func (u UserDao) Create(cnxParams string, user model.UserInterface) (int64, erro
 	if err != nil {
 		return -1, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return -1, err
 	}
@@ -37,7 +43,12 @@ func (u UserDao) Update(cnxParams string, user model.UserInterface) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return err
 	}
@@ -54,7 +65,12 @@ func (u UserDao) CountByCriteria(cnxParams string, criteria model.UserFilterCrit
 	if err != nil {
 		return 0, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return 0, err
 	}
@@ -82,7 +98,12 @@ func (u UserDao) FindByCriteria(cnxParams string, criteria model.UserFilterCrite
 	if err != nil {
 		return searchResults, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return searchResults, err
 	}
@@ -145,7 +166,12 @@ func (u UserDao) FindByCode(cnxParams string, tenantId int64, orgId int64, exter
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -188,7 +214,12 @@ func (u UserDao) IsLoginInUse(cnxParams string, login string) (int64, string, er
 	if err != nil {
 		return 0, "", err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return 0, "", err
 	}
@@ -216,7 +247,12 @@ func (u UserDao) IsEmailInUse(cnxParams string, email string) (int64, string, er
 	if err != nil {
 		return 0, "", err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return 0, "", err
 	}

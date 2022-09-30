@@ -3,6 +3,7 @@ package impl
 import (
 	"context"
 	"database/sql"
+	pgx2 "github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4"
 	"micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
@@ -27,7 +28,12 @@ func (s SectorDao) Create(cnxParams string, sector model.SectorInterface) (int64
 	if err != nil {
 		return -1, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return -1, err
 	}
@@ -42,7 +48,12 @@ func (s SectorDao) DeleteByOrgId(cnxParams string, orgId int64) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return err
 	}
@@ -59,7 +70,12 @@ func (s SectorDao) FindSectorsByTenantOrg(cnxParams string, tenantId int64, orgI
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +121,12 @@ func (s SectorDao) FindByLabel(cnxParams string, defaultTenantId int64, label st
 	if errCnx != nil {
 		return 0, "", errCnx
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if errCnx != nil {
 		return 0, "", errCnx
 	}
@@ -132,7 +153,12 @@ func (s SectorDao) FindByCode(cnxParams string, defaultTenantId int64, code stri
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return nil, err
 	}
@@ -179,7 +205,12 @@ func (s SectorDao) FindRootSector(cnxParams string, defaultTenantId int64, orgId
 	if err != nil {
 		return 0, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return 0, err
 	}
@@ -209,7 +240,12 @@ func (s SectorDao) DeleteSector(cnxParams string, defaultTenantId int64, sectorI
 	if err != nil {
 		return err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return err
 	}
