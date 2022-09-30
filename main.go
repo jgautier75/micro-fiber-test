@@ -81,6 +81,7 @@ func main() {
 	// Users
 	app.Post("/api/v1/organizations/:orgCode/users", endpoints.MakeUserCreateEndpoint(dbUrl, defaultTenantId, userSvc, orgSvc))
 	app.Get("/api/v1/organizations/:orgCode/users", endpoints.MakeUserSearchFilter(dbUrl, defaultTenantId, userSvc, orgSvc))
+	app.Get("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserFindByCode(dbUrl, defaultTenantId, userSvc, orgSvc))
 
 	errTls := app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
 	if errTls != nil {

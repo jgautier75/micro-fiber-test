@@ -27,8 +27,8 @@ func (u UserDao) Create(cnxParams string, user model.UserInterface) (int64, erro
 		return -1, err
 	}
 	var id int64
-	insertStmt := "insert into users(tenant_id,org_id,code,last_name,first_name,middle_name,login,email,status) values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id"
-	errQuery := conn.QueryRow(context.Background(), insertStmt, user.GetTenantId(), user.GetOrgId(), user.GetCode(), user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetStatus()).Scan(&id)
+	insertStmt := "insert into users(tenant_id,org_id,external_id,last_name,first_name,middle_name,login,email,status) values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id"
+	errQuery := conn.QueryRow(context.Background(), insertStmt, user.GetTenantId(), user.GetOrgId(), user.GetExternalId(), user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetStatus()).Scan(&id)
 	return id, errQuery
 }
 
@@ -71,7 +71,7 @@ func (u UserDao) FindByCriteria(cnxParams string, criteria model.UserFilterCrite
 	}
 
 	var fullQry strings.Builder
-	qryPrefix := "select id,code,last_name,first_name,middle_name,login,email,status from users where tenant_id=$1 and org_id=$2"
+	qryPrefix := "select id,external_id,last_name,first_name,middle_name,login,email,status from users where tenant_id=$1 and org_id=$2"
 	whereClause, vals := computeFindByCriteriaQuery(qryPrefix, criteria)
 	fullQry.WriteString(whereClause)
 	fullQry.WriteString(" order by  last_name,first_name asc")
@@ -95,20 +95,20 @@ func (u UserDao) FindByCriteria(cnxParams string, criteria model.UserFilterCrite
 	var users []model.UserInterface
 	for rows.Next() {
 		var id int64
-		var code string
+		var externalId string
 		var lastName string
 		var firstName string
 		var middleName string
 		var login string
 		var email string
 		var status int64
-		err = rows.Scan(&id, &code, &lastName, &firstName, &middleName, &login, &email, &status)
+		err = rows.Scan(&id, &externalId, &lastName, &firstName, &middleName, &login, &email, &status)
 		if err != nil {
 			return searchResults, err
 		}
 		userInterface := model.User{}
 		userInterface.SetId(id)
-		userInterface.SetCode(code)
+		userInterface.SetExternalId(externalId)
 		userInterface.SetLastName(lastName)
 		userInterface.SetFirstName(firstName)
 		userInterface.SetMiddleName(middleName)
@@ -121,6 +121,49 @@ func (u UserDao) FindByCriteria(cnxParams string, criteria model.UserFilterCrite
 	searchResults.Users = users
 
 	return searchResults, nil
+}
+
+func (u UserDao) FindByCode(cnxParams string, tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
+	conn, err := pgx.Connect(context.Background(), cnxParams)
+	if err != nil {
+		return nil, err
+	}
+	defer conn.Close(context.Background())
+	if err != nil {
+		return nil, err
+	}
+	qry := "select id,external_id,last_name,first_name,middle_name,login,email,status from users where tenant_id=$1 and org_id=$2 and external_id=$3"
+	rows, errQuery := conn.Query(context.Background(), qry, tenantId, orgId, externalId)
+	if errQuery != nil {
+		return nil, errQuery
+	}
+	defer rows.Close()
+	userInterface := model.User{}
+	for rows.Next() {
+		var id int64
+		var extId string
+		var lastName string
+		var firstName string
+		var middleName string
+		var login string
+		var email string
+		var status int64
+		err = rows.Scan(&id, &extId, &lastName, &firstName, &middleName, &login, &email, &status)
+		if err != nil {
+			return nil, err
+		}
+		userInterface := model.User{}
+		userInterface.SetId(id)
+		userInterface.SetExternalId(extId)
+		userInterface.SetLastName(lastName)
+		userInterface.SetFirstName(firstName)
+		userInterface.SetMiddleName(middleName)
+		userInterface.SetLogin(login)
+		userInterface.SetEmail(email)
+		userInterface.SetStatus(model.UserStatus(status))
+		return &userInterface, nil
+	}
+	return &userInterface, nil
 }
 
 func computeFindByCriteriaQuery(qryPrefix string, criteria model.UserFilterCriteria) (string string, params []interface{}) {

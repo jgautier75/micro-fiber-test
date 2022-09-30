@@ -33,7 +33,7 @@ create table users(
 	id bigint primary key default nextval('users_id_seq'),
 	tenant_id bigint not null references tenants(id),
 	org_id bigint not null references organizations(id),
-	code varchar(50) not null,
+	external_id varchar(50) not null,
 	last_name varchar(50) not null,
 	first_name varchar(50) not null,
 	middle_name varchar(50),

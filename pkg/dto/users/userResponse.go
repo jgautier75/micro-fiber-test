@@ -1,7 +1,7 @@
 package users
 
 type UserResponse struct {
-	Code       string `json:"code"`
+	ExternalId string `json:"id"`
 	LastName   string `json:"lastName"`
 	FirstName  string `json:"firstName"`
 	MiddleName string `json:"middleName,omitempty"`

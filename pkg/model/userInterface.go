@@ -16,8 +16,8 @@ type UserInterface interface {
 	SetTenantId(id int64)
 	GetOrgId() int64
 	SetOrgId(orgId int64)
-	GetCode() string
-	SetCode(code string)
+	GetExternalId() string
+	SetExternalId(code string)
 	GetLastName() string
 	SetLastName(lastName string)
 	GetFirstName() string

@@ -4,7 +4,7 @@ type User struct {
 	id         int64
 	tenantId   int64
 	orgId      int64
-	code       string
+	externalId string
 	lastName   string
 	firstName  string
 	middleName string
@@ -37,12 +37,12 @@ func (usr *User) SetOrgId(forgId int64) {
 	usr.orgId = forgId
 }
 
-func (usr *User) GetCode() string {
-	return usr.code
+func (usr *User) GetExternalId() string {
+	return usr.externalId
 }
 
-func (usr *User) SetCode(fcode string) {
-	usr.code = fcode
+func (usr *User) SetExternalId(fcode string) {
+	usr.externalId = fcode
 }
 
 func (usr *User) GetLastName() string {
