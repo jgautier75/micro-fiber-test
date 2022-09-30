@@ -3,7 +3,6 @@ package impl
 import (
 	"context"
 	"errors"
-	pgx2 "github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4"
 	"micro-fiber-test/pkg/commons"
 	daoApi "micro-fiber-test/pkg/dao/api"
@@ -26,7 +25,7 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 		if err != nil {
 			return -1, err
 		}
-		defer func(conn *pgx2.Conn, ctx context.Context) {
+		defer func(conn *pgx.Conn, ctx context.Context) {
 			err := conn.Close(ctx)
 			if err != nil {
 
