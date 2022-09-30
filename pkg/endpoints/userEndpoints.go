@@ -134,7 +134,7 @@ func MakeUserFindByCode(dbmsUrl string, defaultTenantId int64, userSvc api.UserS
 			return ctx.JSON(apiErr)
 		}
 
-		usrId := ctx.Params("userId", "")
+		usrId := ctx.Params("userId")
 		u, errFind := userSvc.FindByCode(dbmsUrl, defaultTenantId, org.GetId(), usrId)
 		if errFind != nil {
 			return errFind
