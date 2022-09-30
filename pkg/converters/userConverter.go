@@ -27,6 +27,8 @@ func ConvertUserUpdateReqToDaoModel(defaultTenantId int64, userReq users.UpdateU
 	if userReq.MiddleName != nil {
 		usr.SetMiddleName(*userReq.MiddleName)
 	}
+	usr.SetEmail(userReq.Email)
+	usr.SetLogin(userReq.Login)
 	return usr
 }
 

@@ -10,4 +10,6 @@ type UserDaoInterface interface {
 	FindByCriteria(cnxParams string, criteria model.UserFilterCriteria) (model.UserSearchResult, error)
 	CountByCriteria(cnxParams string, criteria model.UserFilterCriteria) (int, error)
 	Update(cnxParams string, user model.UserInterface) error
+	IsLoginInUse(cnxParams string, login string) (int64, string, error)
+	IsEmailInUse(cnxParams string, email string) (int64, string, error)
 }
