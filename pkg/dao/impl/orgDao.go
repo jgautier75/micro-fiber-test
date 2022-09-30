@@ -2,6 +2,7 @@ package impl
 
 import (
 	"context"
+	pgx2 "github.com/jackc/pgx"
 	"github.com/jackc/pgx/v4"
 	"micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
@@ -26,7 +27,12 @@ func (orgRepo *OrgDao) Create(cnxParams string, org model.OrganizationInterface)
 	if err != nil {
 		return -1, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return -1, err
 	}
@@ -41,7 +47,12 @@ func (orgRepo *OrgDao) Update(cnxParams string, orgCode string, label string) er
 	if err != nil {
 		return err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	if err != nil {
 		return err
 	}
@@ -55,7 +66,12 @@ func (orgRepo *OrgDao) Delete(cnxParams string, orgCode string) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	deleteStmt := "delete from organizations where code=$1"
 	_, errQuery := conn.Exec(context.Background(), deleteStmt, orgCode)
 	return errQuery
@@ -66,7 +82,12 @@ func (orgRepo *OrgDao) FindByCode(cnxParams string, code string) (model.Organiza
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	selStmt := "select id,tenant_id,code,label,type,status from organizations where code=$1"
 	rows, e := conn.Query(context.Background(), selStmt, code)
 	if err != nil {
@@ -102,7 +123,12 @@ func (orgRepo *OrgDao) FindAll(cnxParams string, tenantId int64) ([]model.Organi
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	selStmt := "select id,tenant_id,code,label,type,status from organizations where tenant_id=$1"
 	rows, e := conn.Query(context.Background(), selStmt, tenantId)
 	if err != nil {
@@ -139,7 +165,12 @@ func (orgRepo *OrgDao) ExistsByCode(cnxParams string, tenantId int64, code strin
 	if err != nil {
 		return false, err
 	}
-	defer conn.Close(context.Background())
+	defer func(conn *pgx2.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
 	selStmt := "select count(1) from organizations where tenant_id=$1 and code=$2"
 	rows, e := conn.Query(context.Background(), selStmt, tenantId, code)
 	defer rows.Close()

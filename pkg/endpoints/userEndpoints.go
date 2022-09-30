@@ -24,12 +24,12 @@ func MakeUserCreateEndpoint(dbmsUrl string, defaultTenantId int64, userSvc api.U
 		// Ensure organization exists
 		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
 		if errFindOrga != nil {
-			ctx.SendStatus(fiber.StatusInternalServerError)
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
 		if org == nil {
-			ctx.SendStatus(fiber.StatusNotFound)
+			_ = ctx.SendStatus(fiber.StatusNotFound)
 			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
 		}
@@ -37,7 +37,7 @@ func MakeUserCreateEndpoint(dbmsUrl string, defaultTenantId int64, userSvc api.U
 		// Deserialize request
 		userReq := users.CreateUserReq{}
 		if err := ctx.BodyParser(&userReq); err != nil {
-			ctx.SendStatus(fiber.StatusInternalServerError)
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
 		}
@@ -45,7 +45,7 @@ func MakeUserCreateEndpoint(dbmsUrl string, defaultTenantId int64, userSvc api.U
 		// Validate payload
 		validErr := validation.Validate(userReq)
 		if validErr != nil && len(validErr) > 0 {
-			ctx.SendStatus(fiber.StatusBadRequest)
+			_ = ctx.SendStatus(fiber.StatusBadRequest)
 			apiError := contracts.ConvertValidationError(validErr)
 			return ctx.JSON(apiError)
 		}
@@ -59,17 +59,17 @@ func MakeUserCreateEndpoint(dbmsUrl string, defaultTenantId int64, userSvc api.U
 			if errCreate != nil {
 				if errCreate.Error() == commons.UserLoginAlreadyInUse || errCreate.Error() == commons.UserEmailAlreadyInUse {
 					apiError := contracts.ConvertToFunctionalError(errCreate, fiber.StatusConflict)
-					ctx.SendStatus(fiber.StatusConflict)
+					_ = ctx.SendStatus(fiber.StatusConflict)
 					return ctx.JSON(apiError)
 				}
 			} else {
 				apiError := contracts.ConvertToInternalError(errCreate)
-				ctx.SendStatus(fiber.StatusInternalServerError)
+				_ = ctx.SendStatus(fiber.StatusInternalServerError)
 				return ctx.JSON(apiError)
 			}
 		}
 		idResponse := dtos.ExternalIdResponse{ID: extUUID}
-		ctx.SendStatus(fiber.StatusCreated)
+		_ = ctx.SendStatus(fiber.StatusCreated)
 		return ctx.JSON(idResponse)
 	}
 }
@@ -81,12 +81,12 @@ func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.Use
 		// Ensure organization exists
 		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
 		if errFindOrga != nil {
-			ctx.SendStatus(fiber.StatusInternalServerError)
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
 		if org == nil {
-			ctx.SendStatus(fiber.StatusNotFound)
+			_ = ctx.SendStatus(fiber.StatusNotFound)
 			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
 		}
@@ -122,7 +122,7 @@ func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.Use
 			Pagination: pageResp,
 		}
 
-		ctx.SendStatus(fiber.StatusOK)
+		_ = ctx.SendStatus(fiber.StatusOK)
 		return ctx.JSON(userListReponse)
 	}
 }
@@ -134,12 +134,12 @@ func MakeUserFindByCode(dbmsUrl string, defaultTenantId int64, userSvc api.UserS
 		// Ensure organization exists
 		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
 		if errFindOrga != nil {
-			ctx.SendStatus(fiber.StatusInternalServerError)
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
 		if org == nil {
-			ctx.SendStatus(fiber.StatusNotFound)
+			_ = ctx.SendStatus(fiber.StatusNotFound)
 			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
 		}
@@ -150,7 +150,7 @@ func MakeUserFindByCode(dbmsUrl string, defaultTenantId int64, userSvc api.UserS
 			return errFind
 		}
 
-		ctx.SendStatus(fiber.StatusOK)
+		_ = ctx.SendStatus(fiber.StatusOK)
 		return ctx.JSON(converters.ConvertFromDaoModelToUserResponse(u))
 	}
 }
@@ -162,12 +162,12 @@ func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 		// Ensure organization exists
 		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
 		if errFindOrga != nil {
-			ctx.SendStatus(fiber.StatusInternalServerError)
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
 		if org == nil {
-			ctx.SendStatus(fiber.StatusNotFound)
+			_ = ctx.SendStatus(fiber.StatusNotFound)
 			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
 		}
@@ -180,14 +180,14 @@ func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 
 		if u == nil {
 			apiError := contracts.ConvertToFunctionalError(errors.New(commons.UserNotFound), fiber.StatusNotFound)
-			ctx.SendStatus(fiber.StatusNotFound)
+			_ = ctx.SendStatus(fiber.StatusNotFound)
 			return ctx.JSON(apiError)
 		}
 
 		// Deserialize request
 		userReq := users.UpdateUserReq{}
 		if err := ctx.BodyParser(&userReq); err != nil {
-			ctx.SendStatus(fiber.StatusInternalServerError)
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
 		}
@@ -195,7 +195,7 @@ func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 		// Validate payload
 		validErr := validation.Validate(userReq)
 		if validErr != nil && len(validErr) > 0 {
-			ctx.SendStatus(fiber.StatusBadRequest)
+			_ = ctx.SendStatus(fiber.StatusBadRequest)
 			apiError := contracts.ConvertValidationError(validErr)
 			return ctx.JSON(apiError)
 		}
@@ -208,7 +208,7 @@ func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 		if errUpdate != nil {
 			if errUpdate.Error() == commons.UserLoginAlreadyInUse || errUpdate.Error() == commons.UserEmailAlreadyInUse {
 				apiError := contracts.ConvertToFunctionalError(errUpdate, fiber.StatusConflict)
-				ctx.SendStatus(fiber.StatusConflict)
+				_ = ctx.SendStatus(fiber.StatusConflict)
 				return ctx.JSON(apiError)
 			}
 		}
