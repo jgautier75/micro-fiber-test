@@ -25,5 +25,14 @@ func (u UserService) Create(cnxParams string, defautTenantId int64, user model.U
 }
 
 func (u UserService) FindByCriteria(cnxParams string, criteria model.UserFilterCriteria) (model.UserSearchResult, error) {
-	return u.dao.FindByCriteria(cnxParams, criteria)
+	userSearchResult, err := u.dao.FindByCriteria(cnxParams, criteria)
+	if err != nil {
+		return userSearchResult, err
+	}
+	cnt, errCount := u.dao.CountByCriteria(cnxParams, criteria)
+	if errCount != nil {
+		return userSearchResult, err
+	}
+	userSearchResult.NbResults = cnt
+	return userSearchResult, nil
 }

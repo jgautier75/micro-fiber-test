@@ -81,30 +81,10 @@ func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.Use
 			return ctx.JSON(apiErr)
 		}
 
-		userFilterCriteria := model.UserFilterCriteria{}
-		userFilterCriteria.OrgId = org.GetId()
-		userFilterCriteria.TenantId = org.GetTenantId()
-
-		firstName := ctx.Query("firstname", "")
-		userFilterCriteria.FirstName = firstName
-		lastName := ctx.Query("lastname", "")
-		userFilterCriteria.LastName = lastName
-		email := ctx.Query("email", "")
-		userFilterCriteria.Email = email
-		login := ctx.Query("login", "")
-		userFilterCriteria.Login = login
-		rowsPerPageStr := ctx.Query("rows", "5")
-		rowsPerPage, errConvert := strconv.Atoi(rowsPerPageStr)
-		if errConvert != nil {
-			return errConvert
+		userFilterCriteria, errCriteria := buildCriteria(org, ctx)
+		if errCriteria != nil {
+			return errCriteria
 		}
-		userFilterCriteria.RowsPerPage = rowsPerPage
-		pageStr := ctx.Query("page", "1")
-		curPage, errPage := strconv.Atoi(pageStr)
-		if errPage != nil {
-			return errPage
-		}
-		userFilterCriteria.Page = curPage
 
 		usersCriteria, errFind := userSvc.FindByCriteria(dbmsUrl, userFilterCriteria)
 		if errFind != nil {
@@ -118,14 +98,14 @@ func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.Use
 		}
 
 		pageResp := commonsDto.Pagination{
-			Page:  curPage,
-			Count: usersCriteria.NbResults,
+			Page:       userFilterCriteria.Page,
+			TotalCount: usersCriteria.NbResults,
 		}
 		totalPages := 1
-		if usersCriteria.NbResults >= rowsPerPage {
-			totalPages = usersCriteria.NbResults/rowsPerPage + 1
+		if usersCriteria.NbResults >= userFilterCriteria.RowsPerPage {
+			totalPages = usersCriteria.NbResults/userFilterCriteria.RowsPerPage + 1
 		}
-		pageResp.Total = totalPages
+		pageResp.NbPages = totalPages
 
 		userListReponse := usersResponses.UserListResponse{
 			Users:      usersArray,
@@ -136,4 +116,32 @@ func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.Use
 		ctx.SendStatus(fiber.StatusOK)
 		return ctx.JSON(userListReponse)
 	}
+}
+
+func buildCriteria(org model.OrganizationInterface, ctx *fiber.Ctx) (model.UserFilterCriteria, error) {
+	userFilterCriteria := model.UserFilterCriteria{}
+	userFilterCriteria.OrgId = org.GetId()
+	userFilterCriteria.TenantId = org.GetTenantId()
+
+	firstName := ctx.Query("firstname", "")
+	userFilterCriteria.FirstName = firstName
+	lastName := ctx.Query("lastname", "")
+	userFilterCriteria.LastName = lastName
+	email := ctx.Query("email", "")
+	userFilterCriteria.Email = email
+	login := ctx.Query("login", "")
+	userFilterCriteria.Login = login
+	rowsPerPageStr := ctx.Query("rows", "5")
+	rowsPerPage, errConvert := strconv.Atoi(rowsPerPageStr)
+	if errConvert != nil {
+		return userFilterCriteria, errConvert
+	}
+	userFilterCriteria.RowsPerPage = rowsPerPage
+	pageStr := ctx.Query("page", "1")
+	curPage, errPage := strconv.Atoi(pageStr)
+	if errPage != nil {
+		return userFilterCriteria, errPage
+	}
+	userFilterCriteria.Page = curPage
+	return userFilterCriteria, nil
 }

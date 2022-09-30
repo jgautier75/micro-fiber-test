@@ -7,4 +7,5 @@ import (
 type UserDaoInterface interface {
 	Create(cnxParams string, user model.UserInterface) (int64, error)
 	FindByCriteria(cnxParams string, criteria model.UserFilterCriteria) (model.UserSearchResult, error)
+	CountByCriteria(cnxParams string, criteria model.UserFilterCriteria) (int, error)
 }

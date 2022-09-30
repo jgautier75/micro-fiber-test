@@ -1,7 +1,7 @@
 package commons
 
 type Pagination struct {
-	Page  int `json:"page"`
-	Total int `json:"total"`
-	Count int `json:"count"`
+	Page       int `json:"page"`
+	NbPages    int `json:"nbPages"`
+	TotalCount int `json:"totalCount"`
 }

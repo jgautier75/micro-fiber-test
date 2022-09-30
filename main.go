@@ -7,6 +7,7 @@ import (
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
+	"micro-fiber-test/pkg/contracts"
 	"micro-fiber-test/pkg/dao/impl"
 	"micro-fiber-test/pkg/endpoints"
 	svcImpl "micro-fiber-test/pkg/service/impl"
@@ -32,12 +33,26 @@ func main() {
 	defaultTenantId := k.Int64("app.tenant")
 	dbUrl := k.String("app.pgUrl")
 
-	app := fiber.New()
+	var defErrorHandler = func(c *fiber.Ctx, err error) error {
+		code := fiber.StatusInternalServerError
+		apiError := contracts.ConvertToInternalError(err)
+		return c.Status(code).JSON(apiError)
+	}
+
+	fConfig := fiber.Config{
+		CaseSensitive:     true,
+		StrictRouting:     true,
+		EnablePrintRoutes: true,
+		UnescapePath:      true,
+		ErrorHandler:      defErrorHandler,
+	}
+
+	app := fiber.New(fConfig)
 
 	app.Use(logger.New(logger.Config{
 		TimeFormat: "2006-01-02T15:04:05-0700",
 		TimeZone:   "UTC",
-		Format:     "[${time}] - [${ip}]:${port} ${status} - ${method} ${path}\n>>>>>>>>>>> Request\n${reqHeaders}\n${body}\n<<<<<<<<<<< Response\n${resBody}",
+		Format:     "[${time}] - [${ip}]:${port} ${status} - ${method} - ${path}\n<<<<<<<<<< Request\n${reqHeaders}\n${body}\n>>>>>>>>>> Response\n${protocol}:${status}\nBody:${resBody}\n",
 	}))
 
 	// Organizations
