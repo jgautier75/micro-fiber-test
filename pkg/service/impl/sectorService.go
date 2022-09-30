@@ -1,6 +1,8 @@
 package impl
 
 import (
+	"errors"
+	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
 	svcApi "micro-fiber-test/pkg/service/api"
@@ -16,6 +18,14 @@ func NewSectorService(daoP api.SectorDaoInterface) svcApi.SectorServiceInterface
 
 func (sectorSvc SectorService) Create(cnxParams string, defautTenantId int64, sector model.SectorInterface) (int64, error) {
 	sector.SetTenantId(defautTenantId)
+	id, _, err := sectorSvc.dao.FindByLabel(cnxParams, defautTenantId, sector.GetLabel())
+	if err != nil {
+		return 0, err
+	}
+	if id > 0 {
+		return 0, errors.New(commons.SectorAlreadyExist)
+	}
+
 	id, createErr := sectorSvc.dao.Create(cnxParams, sector)
 	if createErr != nil {
 		return 0, createErr
