@@ -65,11 +65,11 @@ func (s SectorDao) FindSectorsByTenantOrg(cnxParams string, tenantId int64, orgI
 	}
 	selStmt := "select id,tenant_id,org_id,code,label,parent_id,has_parent,depth,status from sectors where tenant_id=$1 and org_id=$2"
 	rows, e := conn.Query(context.Background(), selStmt, tenantId, orgId)
+	defer rows.Close()
 	if err != nil {
 		return nil, err
 	}
 
-	defer rows.Close()
 	var sectors []model.SectorInterface
 	for rows.Next() {
 		var id int64
@@ -98,6 +98,33 @@ func (s SectorDao) FindSectorsByTenantOrg(cnxParams string, tenantId int64, orgI
 		sectors = append(sectors, &sector)
 	}
 	return sectors, nil
+}
+
+func (s SectorDao) FindByLabel(cnxParams string, defaultTenantId int64, label string) (int64, string, error) {
+	conn, errCnx := pgx.Connect(context.Background(), cnxParams)
+	if errCnx != nil {
+		return 0, "", errCnx
+	}
+	defer conn.Close(context.Background())
+	if errCnx != nil {
+		return 0, "", errCnx
+	}
+	selStmt := "select id,code from sectors where tenant_id=$1 and label=$2"
+	rows, errQry := conn.Query(context.Background(), selStmt, defaultTenantId, label)
+	defer rows.Close()
+	if errQry != nil {
+		return 0, "", errQry
+	}
+	for rows.Next() {
+		var rsCode string
+		var rsId int64
+		errScan := rows.Scan(&rsId, &rsCode)
+		if errScan != nil {
+			return 0, "", errScan
+		}
+		return rsId, rsCode, nil
+	}
+	return 0, "", nil
 }
 
 func (s SectorDao) FindByCode(cnxParams string, defaultTenantId int64, code string) (model.SectorInterface, error) {

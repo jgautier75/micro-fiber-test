@@ -13,4 +13,5 @@ type SectorDaoInterface interface {
 	FindByCode(cnxParams string, defaultTenantId int64, code string) (model.SectorInterface, error)
 	FindRootSector(cnxParams string, defaultTenantId int64, orgId int64) (int64, error)
 	DeleteSector(cnxParams string, defaultTenantId int64, sectorId int64) error
+	FindByLabel(cnxParams string, defaultTenantId int64, label string) (int64, string, error)
 }

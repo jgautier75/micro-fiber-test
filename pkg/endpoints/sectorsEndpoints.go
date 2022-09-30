@@ -124,7 +124,15 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 
 		_, errCreate := sectSvc.Create(dbmsUrl, defaultTenantId, &secModel)
 		if errCreate != nil {
-			return errCreate
+			if errCreate.Error() == commons.SectorAlreadyExist {
+				ctx.SendStatus(fiber.StatusConflict)
+				apiError := contracts.ConvertToFunctionalError(errCreate, fiber.StatusConflict)
+				return ctx.JSON(apiError)
+			} else {
+				ctx.SendStatus(fiber.StatusInternalServerError)
+				apiError := contracts.ConvertToInternalError(errCreate)
+				return ctx.JSON(apiError)
+			}
 		}
 
 		idResponse := dtos.CodeResponse{Code: codeUUID}
