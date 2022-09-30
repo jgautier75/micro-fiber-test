@@ -36,3 +36,7 @@ func (u UserService) FindByCriteria(cnxParams string, criteria model.UserFilterC
 	userSearchResult.NbResults = cnt
 	return userSearchResult, nil
 }
+
+func (u UserService) FindByCode(cnxParams string, tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
+	return u.dao.FindByCode(cnxParams, tenantId, orgId, externalId)
+}

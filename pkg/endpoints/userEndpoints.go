@@ -53,7 +53,7 @@ func MakeUserCreateEndpoint(dbmsUrl string, defaultTenantId int64, userSvc api.U
 		usrModel := converters.ConvertUserReqToDaoModel(defaultTenantId, userReq)
 		usrModel.SetOrgId(org.GetId())
 		codeUUID := uuid.New().String()
-		usrModel.SetCode(codeUUID)
+		usrModel.SetExternalId(codeUUID)
 		_, errCreate := userSvc.Create(dbmsUrl, defaultTenantId, &usrModel)
 		if errCreate != nil {
 			return errCreate
@@ -112,9 +112,36 @@ func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.Use
 			Pagination: pageResp,
 		}
 
-		ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
 		ctx.SendStatus(fiber.StatusOK)
 		return ctx.JSON(userListReponse)
+	}
+}
+
+func MakeUserFindByCode(dbmsUrl string, defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		orgCode := ctx.Params("orgCode")
+
+		// Ensure organization exists
+		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		if errFindOrga != nil {
+			ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			return ctx.JSON(apiErr)
+		}
+		if org == nil {
+			ctx.SendStatus(fiber.StatusNotFound)
+			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
+			return ctx.JSON(apiErr)
+		}
+
+		usrId := ctx.Params("userId", "")
+		u, errFind := userSvc.FindByCode(dbmsUrl, defaultTenantId, org.GetId(), usrId)
+		if errFind != nil {
+			return errFind
+		}
+
+		ctx.SendStatus(fiber.StatusOK)
+		return ctx.JSON(converters.ConvertFromDaoModelToUserResponse(u))
 	}
 }
 
