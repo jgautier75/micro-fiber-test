@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/logger"
@@ -34,15 +35,25 @@ func main() {
 	dbUrl := k.String("app.pgUrl")
 
 	var defErrorHandler = func(c *fiber.Ctx, err error) error {
+		var e *fiber.Error
 		code := fiber.StatusInternalServerError
-		apiError := contracts.ConvertToInternalError(err)
-		return c.Status(code).JSON(apiError)
+		if errors.As(err, &e) {
+			code = e.Code
+			if code >= fiber.StatusBadRequest && code < fiber.StatusInternalServerError {
+				apiError := contracts.ConvertToFunctionalError(err, code)
+				return c.Status(code).JSON(apiError)
+			} else {
+				apiError := contracts.ConvertToInternalError(err)
+				return c.Status(code).JSON(apiError)
+			}
+		}
+		return c.Status(fiber.StatusInternalServerError).JSON(contracts.ConvertToInternalError(err))
 	}
 
 	fConfig := fiber.Config{
 		CaseSensitive:     true,
 		StrictRouting:     true,
-		EnablePrintRoutes: true,
+		EnablePrintRoutes: false,
 		UnescapePath:      true,
 		ErrorHandler:      defErrorHandler,
 	}
@@ -71,5 +82,8 @@ func main() {
 	app.Post("/api/v1/organizations/:orgCode/users", endpoints.MakeUserCreateEndpoint(dbUrl, defaultTenantId, userSvc, orgSvc))
 	app.Get("/api/v1/organizations/:orgCode/users", endpoints.MakeUserSearchFilter(dbUrl, defaultTenantId, userSvc, orgSvc))
 
-	app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
+	errTls := app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
+	if errTls != nil {
+		fmt.Printf("ListenTLS error [%s]", errTls)
+	}
 }
