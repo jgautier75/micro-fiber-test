@@ -29,6 +29,7 @@ func main() {
 	targetPort := k.String("http.server.port")
 	defaultTenantId := k.Int64("app.tenant")
 	dbUrl := k.String("app.pgUrl")
+	logCfg := k.String("app.logFile")
 
 	// Setup service & dao
 	orgDao := impl.NewOrgDao(dbUrl)
@@ -68,7 +69,7 @@ func main() {
 	config.EncodeTime = zapcore.ISO8601TimeEncoder
 	fileEncoder := zapcore.NewJSONEncoder(config)
 	consoleEncoder := zapcore.NewConsoleEncoder(config)
-	logFile, _ := os.OpenFile("fiber-test.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	logFile, _ := os.OpenFile(logCfg, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	writer := zapcore.AddSync(logFile)
 	defaultLogLevel := zapcore.DebugLevel
 	core := zapcore.NewTee(
@@ -78,7 +79,9 @@ func main() {
 	zapLogger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 
 	logger, _ := zap.NewProduction()
-	defer logger.Sync()
+	defer func(logger *zap.Logger) {
+		_ = logger.Sync()
+	}(logger)
 
 	app.Use(logging.New(
 		fiberLogger.Config{

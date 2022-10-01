@@ -4,3 +4,4 @@ http:
 app:
   tenant: 1
   pgUrl: postgres://postgres:4y7sV96vA9wv46VR@localhost:5432/rainbow_database
+  logFile: ./access.log
