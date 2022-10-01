@@ -37,6 +37,11 @@ func New(cfg logger.Config, zapLogger *zap.Logger) fiber.Handler {
 	)
 
 	return func(c *fiber.Ctx) (err error) {
+
+		defer func(zapLogger *zap.Logger) {
+			_ = zapLogger.Sync()
+		}(zapLogger)
+
 		// Don't execute middleware if Next returns true
 		if cfg.Next != nil && cfg.Next(c) {
 			return c.Next()
@@ -80,6 +85,7 @@ func New(cfg logger.Config, zapLogger *zap.Logger) fiber.Handler {
 			zap.Field{Key: "http.response.status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
 			zap.Field{Key: "http.response.body", Type: zapcore.StringType, String: string(c.Response().Body())},
 		)
+
 		return nil
 	}
 
