@@ -181,3 +181,66 @@ func MakeSectorDeleteEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		return nil
 	}
 }
+
+func MakeSectorUpdateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
+	return func(ctx *fiber.Ctx) error {
+		orgCode := ctx.Params("orgCode")
+
+		// Ensure organization exists
+		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
+		if errFindOrga != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			return ctx.JSON(apiErr)
+		}
+		if org == nil {
+			_ = ctx.SendStatus(fiber.StatusNotFound)
+			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
+			return ctx.JSON(apiErr)
+		}
+
+		// Ensure sector exists
+		sectorCode := ctx.Params("sectorCode")
+		sector, errSect := sectSvc.FindByCode(defaultTenantId, sectorCode)
+		if errSect != nil {
+			return errSect
+		}
+		if sector == nil || sector.GetId() <= 0 {
+			_ = ctx.SendStatus(fiber.StatusNotFound)
+			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.SectorNotFound), fiber.StatusNotFound)
+			return ctx.JSON(apiErr)
+		}
+
+		payload := struct {
+			Label string `json:"label"`
+		}{}
+		if err := ctx.BodyParser(&payload); err != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(err)
+			return ctx.JSON(apiErr)
+		}
+
+		idSec, codeSec, errSec := sectSvc.FindByLabel(defaultTenantId, payload.Label)
+		if errSec != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errSec)
+			return ctx.JSON(apiErr)
+		}
+
+		if idSec > 0 && codeSec != sector.GetCode() {
+			_ = ctx.SendStatus(fiber.StatusConflict)
+			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.SectorAlreadyExist), fiber.StatusConflict)
+			return ctx.JSON(apiErr)
+		}
+
+		errDelete := sectSvc.Update(defaultTenantId, sector.GetId(), payload.Label)
+		if errDelete != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiErr := contracts.ConvertToInternalError(errDelete)
+			return ctx.JSON(apiErr)
+		}
+
+		_ = ctx.SendStatus(fiber.StatusNoContent)
+		return nil
+	}
+}

@@ -255,3 +255,25 @@ func (s SectorDao) DeleteSector(defaultTenantId int64, sectorId int64) error {
 	_, e := conn.Exec(context.Background(), deleteStmt, defaultTenantId, sectorId, sectorId)
 	return e
 }
+
+func (s SectorDao) Update(defaultTenantId int64, id int64, label string) error {
+	conn, err := pgx.Connect(context.Background(), s.CnxParams)
+	if err != nil {
+		return err
+	}
+	defer func(conn *pgx.Conn, ctx context.Context) {
+		err := conn.Close(ctx)
+		if err != nil {
+
+		}
+	}(conn, context.Background())
+	if err != nil {
+		return err
+	}
+	updateStmt := "update sectors set label=$1 where id=$2 and tenant_id=$3"
+	_, errQuery := conn.Exec(context.Background(), updateStmt, label, id, defaultTenantId)
+	if errQuery != nil {
+		return errQuery
+	}
+	return nil
+}
