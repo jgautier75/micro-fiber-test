@@ -3,7 +3,7 @@ package impl
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
 	"strconv"
@@ -11,51 +11,25 @@ import (
 )
 
 type UserDao struct {
-	CnxParams string
+	dbPool *pgxpool.Pool
 }
 
-func NewUserDao(cnxParams string) api.UserDaoInterface {
+func NewUserDao(pool *pgxpool.Pool) api.UserDaoInterface {
 	userDao := UserDao{}
-	userDao.CnxParams = cnxParams
+	userDao.dbPool = pool
 	return &userDao
 }
 
 func (u UserDao) Create(user model.UserInterface) (int64, error) {
-	conn, err := pgx.Connect(context.Background(), u.CnxParams)
-	if err != nil {
-		return -1, err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
-	if err != nil {
-		return -1, err
-	}
 	var id int64
 	insertStmt := "insert into users(tenant_id,org_id,external_id,last_name,first_name,middle_name,login,email,status) values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id"
-	errQuery := conn.QueryRow(context.Background(), insertStmt, user.GetTenantId(), user.GetOrgId(), user.GetExternalId(), user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetStatus()).Scan(&id)
+	errQuery := u.dbPool.QueryRow(context.Background(), insertStmt, user.GetTenantId(), user.GetOrgId(), user.GetExternalId(), user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetStatus()).Scan(&id)
 	return id, errQuery
 }
 
 func (u UserDao) Update(user model.UserInterface) error {
-	conn, err := pgx.Connect(context.Background(), u.CnxParams)
-	if err != nil {
-		return err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
-	if err != nil {
-		return err
-	}
 	updateStmt := "update users set last_name=$1,first_name=$2,middle_name=$3,login=$4,email=$5 where external_id=$6"
-	_, errQuery := conn.Exec(context.Background(), updateStmt, user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetExternalId())
+	_, errQuery := u.dbPool.Exec(context.Background(), updateStmt, user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetExternalId())
 	if errQuery != nil {
 		return errQuery
 	}
@@ -63,24 +37,11 @@ func (u UserDao) Update(user model.UserInterface) error {
 }
 
 func (u UserDao) CountByCriteria(criteria model.UserFilterCriteria) (int, error) {
-	conn, err := pgx.Connect(context.Background(), u.CnxParams)
-	if err != nil {
-		return 0, err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
-	if err != nil {
-		return 0, err
-	}
 	var fullQry strings.Builder
 	qryPrefix := "select count(1) from users where tenant_id=$1 and org_id=$2"
 	whereClause, vals := computeFindByCriteriaQuery(qryPrefix, criteria)
 	fullQry.WriteString(whereClause)
-	countRes, errCount := conn.Query(context.Background(), fullQry.String(), vals...)
+	countRes, errCount := u.dbPool.Query(context.Background(), fullQry.String(), vals...)
 	if errCount != nil {
 		return 0, errCount
 	}
@@ -95,21 +56,7 @@ func (u UserDao) CountByCriteria(criteria model.UserFilterCriteria) (int, error)
 }
 
 func (u UserDao) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSearchResult, error) {
-	conn, err := pgx.Connect(context.Background(), u.CnxParams)
 	searchResults := model.UserSearchResult{}
-	if err != nil {
-		return searchResults, err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
-	if err != nil {
-		return searchResults, err
-	}
-
 	var fullQry strings.Builder
 	qryPrefix := "select id,external_id,last_name,first_name,middle_name,login,email,status from users where tenant_id=$1 and org_id=$2"
 	whereClause, vals := computeFindByCriteriaQuery(qryPrefix, criteria)
@@ -127,7 +74,7 @@ func (u UserDao) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSe
 
 	query := fullQry.String()
 
-	rows, errQuery := conn.Query(context.Background(), query, vals...)
+	rows, errQuery := u.dbPool.Query(context.Background(), query, vals...)
 	if errQuery != nil {
 		return searchResults, errQuery
 	}
@@ -142,9 +89,9 @@ func (u UserDao) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSe
 		var login string
 		var email string
 		var status int64
-		err = rows.Scan(&id, &externalId, &lastName, &firstName, &middleName, &login, &email, &status)
-		if err != nil {
-			return searchResults, err
+		errScan := rows.Scan(&id, &externalId, &lastName, &firstName, &middleName, &login, &email, &status)
+		if errScan != nil {
+			return searchResults, errScan
 		}
 		userInterface := model.User{}
 		userInterface.SetId(id)
@@ -164,21 +111,8 @@ func (u UserDao) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSe
 }
 
 func (u UserDao) FindByExternalId(tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
-	conn, err := pgx.Connect(context.Background(), u.CnxParams)
-	if err != nil {
-		return nil, err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
-	if err != nil {
-		return nil, err
-	}
 	qry := "select id,external_id,last_name,first_name,middle_name,login,email,status from users where tenant_id=$1 and org_id=$2 and external_id=$3"
-	rows, errQuery := conn.Query(context.Background(), qry, tenantId, orgId, externalId)
+	rows, errQuery := u.dbPool.Query(context.Background(), qry, tenantId, orgId, externalId)
 	if errQuery != nil {
 		return nil, errQuery
 	}
@@ -193,9 +127,9 @@ func (u UserDao) FindByExternalId(tenantId int64, orgId int64, externalId string
 		var login string
 		var email string
 		var status int64
-		err = rows.Scan(&id, &extId, &lastName, &firstName, &middleName, &login, &email, &status)
-		if err != nil {
-			return nil, err
+		errScan := rows.Scan(&id, &extId, &lastName, &firstName, &middleName, &login, &email, &status)
+		if errScan != nil {
+			return nil, errScan
 		}
 		userInterface := model.User{}
 		userInterface.SetId(id)
@@ -212,22 +146,8 @@ func (u UserDao) FindByExternalId(tenantId int64, orgId int64, externalId string
 }
 
 func (u UserDao) IsLoginInUse(login string) (int64, string, error) {
-	conn, err := pgx.Connect(context.Background(), u.CnxParams)
-	if err != nil {
-		return 0, "", err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
-	if err != nil {
-		return 0, "", err
-	}
 	selStmt := "select id,external_id from users where login=$1"
-
-	rows, errQuery := conn.Query(context.Background(), selStmt, login)
+	rows, errQuery := u.dbPool.Query(context.Background(), selStmt, login)
 	defer rows.Close()
 	if errQuery != nil {
 		return 0, "", errQuery
@@ -235,9 +155,9 @@ func (u UserDao) IsLoginInUse(login string) (int64, string, error) {
 	for rows.Next() {
 		var id int64
 		var extId string
-		err = rows.Scan(&id, &extId)
-		if err != nil {
-			return 0, "", err
+		errScan := rows.Scan(&id, &extId)
+		if errScan != nil {
+			return 0, "", errScan
 		}
 		return id, extId, nil
 	}
@@ -245,21 +165,8 @@ func (u UserDao) IsLoginInUse(login string) (int64, string, error) {
 }
 
 func (u UserDao) IsEmailInUse(email string) (int64, string, error) {
-	conn, err := pgx.Connect(context.Background(), u.CnxParams)
-	if err != nil {
-		return 0, "", err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
-	if err != nil {
-		return 0, "", err
-	}
 	selStmt := "select id,external_id from users where email=$1"
-	rows, errQuery := conn.Query(context.Background(), selStmt, email)
+	rows, errQuery := u.dbPool.Query(context.Background(), selStmt, email)
 	defer rows.Close()
 	if errQuery != nil {
 		return 0, "", errQuery
@@ -267,13 +174,23 @@ func (u UserDao) IsEmailInUse(email string) (int64, string, error) {
 	for rows.Next() {
 		var id int64
 		var extId string
-		err = rows.Scan(&id, &extId)
-		if err != nil {
-			return 0, "", err
+		errScan := rows.Scan(&id, &extId)
+		if errScan != nil {
+			return 0, "", errScan
 		}
 		return id, extId, nil
 	}
 	return 0, "", nil
+}
+
+func (u UserDao) Delete(userExtId string) error {
+	selStmt := "delete from users where external_id=$1"
+	rows, errQuery := u.dbPool.Query(context.Background(), selStmt, userExtId)
+	defer rows.Close()
+	if errQuery != nil {
+		return errQuery
+	}
+	return nil
 }
 
 func computeFindByCriteriaQuery(qryPrefix string, criteria model.UserFilterCriteria) (string string, params []interface{}) {
@@ -308,27 +225,4 @@ func computeFindByCriteriaQuery(qryPrefix string, criteria model.UserFilterCrite
 	}
 	fullQry := buf.String()
 	return fullQry, values
-}
-
-func (u UserDao) Delete(userExtId string) error {
-	conn, err := pgx.Connect(context.Background(), u.CnxParams)
-	if err != nil {
-		return err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
-	if err != nil {
-		return err
-	}
-	selStmt := "delete from users where external_id=$1"
-	rows, errQuery := conn.Query(context.Background(), selStmt, userExtId)
-	defer rows.Close()
-	if errQuery != nil {
-		return errQuery
-	}
-	return nil
 }

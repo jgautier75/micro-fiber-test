@@ -1,7 +1,7 @@
 package api
 
 import (
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
 	"micro-fiber-test/pkg/model"
 )
 
