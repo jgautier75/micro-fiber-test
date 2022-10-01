@@ -2,34 +2,14 @@ package logging
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"strings"
 	"sync"
-	"sync/atomic"
 	"time"
 )
 
-func New(cfg logger.Config, zapLogger *zap.Logger) fiber.Handler {
-
-	var tzLoc *time.Location
-	tz, err := time.LoadLocation(cfg.TimeZone)
-	if err != nil || tz == nil {
-		tzLoc = time.Local
-	} else {
-		tzLoc = tz
-	}
-	var timestamp atomic.Value
-	timestamp.Store(time.Now().In(tzLoc).Format(cfg.TimeFormat))
-	if strings.Contains(cfg.Format, "${time}") {
-		go func() {
-			for {
-				time.Sleep(cfg.TimeInterval)
-				timestamp.Store(time.Now().In(tzLoc).Format(cfg.TimeFormat))
-			}
-		}()
-	}
+func New(zapLogger *zap.Logger) fiber.Handler {
 
 	var (
 		once       sync.Once
@@ -41,11 +21,6 @@ func New(cfg logger.Config, zapLogger *zap.Logger) fiber.Handler {
 		defer func(zapLogger *zap.Logger) {
 			_ = zapLogger.Sync()
 		}(zapLogger)
-
-		// Don't execute middleware if Next returns true
-		if cfg.Next != nil && cfg.Next(c) {
-			return c.Next()
-		}
 
 		// Set error handler once
 		once.Do(func() {

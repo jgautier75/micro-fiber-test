@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
@@ -83,11 +82,7 @@ func main() {
 		_ = logger.Sync()
 	}(logger)
 
-	app.Use(logging.New(
-		fiberLogger.Config{
-			TimeFormat: "2006-01-02T15:04:05-0700",
-			TimeZone:   "UTC",
-		}, zapLogger))
+	app.Use(logging.New(zapLogger))
 
 	// Organizations
 	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(dbUrl, defaultTenantId, orgSvc))
