@@ -7,6 +7,7 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -91,8 +92,17 @@ func TestDao(t *testing.T) {
 		panic(errMig)
 	}
 
+	dbConfig, errDbCfg := pgxpool.ParseConfig(pgUrl)
+	if errDbCfg != nil {
+		panic(errDbCfg)
+	}
+	dbPool, poolErr := pgxpool.NewWithConfig(context.Background(), dbConfig)
+	if poolErr != nil {
+		panic(poolErr)
+	}
+
 	// Test create organization
-	orgRepo := NewOrgDao(pgUrl)
+	orgRepo := NewOrgDao(dbPool)
 	org := model.Organization{}
 	org.SetStatus(model.OrgStatusActive)
 	org.SetLabel("Test Org")
