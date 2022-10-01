@@ -71,7 +71,7 @@ func New(cfg logger.Config, zapLogger *zap.Logger) fiber.Handler {
 		for k, v := range c.GetReqHeaders() {
 			reqHeaders = append(reqHeaders, k+"="+v)
 		}
-		zapLogger.Debug("",
+		zapLogger.Debug("HTTP",
 			zap.Field{Key: "method", Type: zapcore.StringType, String: c.Method()},
 			zap.Field{Key: "path", Type: zapcore.StringType, String: c.Path()},
 			zap.Field{Key: "status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
