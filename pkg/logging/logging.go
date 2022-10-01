@@ -45,22 +45,35 @@ func New(zapLogger *zap.Logger) fiber.Handler {
 			}
 		}
 
+		debugReq := false
 		reqHeaders := make([]string, 0)
 		for k, v := range c.GetReqHeaders() {
+			if strings.ToLower(k) == "x-log-debug" && v == "1" {
+				debugReq = true
+			}
 			reqHeaders = append(reqHeaders, k+"="+v)
 		}
 
-		zapLogger.Debug("HTTP",
-			zap.Field{Key: "method", Type: zapcore.StringType, String: c.Method()},
-			zap.Field{Key: "path", Type: zapcore.StringType, String: c.Path()},
-			zap.Field{Key: "status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
-			zap.Field{Key: "ellapsed", Type: zapcore.Int64Type, Integer: duration.Milliseconds()},
-			zap.Field{Key: "http.request.headers", Type: zapcore.StringType, String: strings.Join(reqHeaders, "&")},
-			zap.Field{Key: "http.request.body", Type: zapcore.StringType, String: string(c.Body())},
-			zap.Field{Key: "http.response.status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
-			zap.Field{Key: "http.response.body", Type: zapcore.StringType, String: string(c.Response().Body())},
-		)
-
+		if debugReq {
+			zapLogger.Debug("HTTP",
+				zap.Field{Key: "method", Type: zapcore.StringType, String: c.Method()},
+				zap.Field{Key: "path", Type: zapcore.StringType, String: c.Path()},
+				zap.Field{Key: "status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
+				zap.Field{Key: "ellapsed", Type: zapcore.Int64Type, Integer: duration.Milliseconds()},
+				zap.Field{Key: "http.request.headers", Type: zapcore.StringType, String: strings.Join(reqHeaders, "&")},
+				zap.Field{Key: "http.request.body", Type: zapcore.StringType, String: string(c.Body())},
+				zap.Field{Key: "http.response.status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
+				zap.Field{Key: "http.response.body", Type: zapcore.StringType, String: string(c.Response().Body())},
+			)
+		} else {
+			zapLogger.Debug("HTTP",
+				zap.Field{Key: "method", Type: zapcore.StringType, String: c.Method()},
+				zap.Field{Key: "path", Type: zapcore.StringType, String: c.Path()},
+				zap.Field{Key: "status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
+				zap.Field{Key: "ellapsed", Type: zapcore.Int64Type, Integer: duration.Milliseconds()},
+				zap.Field{Key: "http.response.status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
+			)
+		}
 		return nil
 	}
 
