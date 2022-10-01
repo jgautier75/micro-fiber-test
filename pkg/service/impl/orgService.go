@@ -3,7 +3,8 @@ package impl
 import (
 	"context"
 	"errors"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"micro-fiber-test/pkg/commons"
 	daoApi "micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
@@ -13,6 +14,7 @@ import (
 type OrganizationService struct {
 	orgDao  daoApi.OrgDaoInterface
 	sectDao daoApi.SectorDaoInterface
+	dbPool  *pgxpool.Pool
 }
 
 func (orgService *OrganizationService) Create(cnxParams string, defaultTenant int64, organization model.OrganizationInterface) (int64, error) {
@@ -121,6 +123,6 @@ func (orgService *OrganizationService) FindAll(defaultTenant int64) ([]model.Org
 	}
 	return orgs, nil
 }
-func NewOrgService(orgDao daoApi.OrgDaoInterface, sectorDao daoApi.SectorDaoInterface) svcApi.OrganizationServiceInterface {
-	return &OrganizationService{orgDao: orgDao, sectDao: sectorDao}
+func NewOrgService(pool *pgxpool.Pool, orgDao daoApi.OrgDaoInterface, sectorDao daoApi.SectorDaoInterface) svcApi.OrganizationServiceInterface {
+	return &OrganizationService{orgDao: orgDao, sectDao: sectorDao, dbPool: pool}
 }

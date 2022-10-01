@@ -2,18 +2,19 @@ package impl
 
 import (
 	"context"
-	"github.com/jackc/pgx/v4"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
 )
 
 type OrgDao struct {
-	CnxParams string
+	dbPool *pgxpool.Pool
 }
 
-func NewOrgDao(cnxParams string) api.OrgDaoInterface {
+func NewOrgDao(pool *pgxpool.Pool) api.OrgDaoInterface {
 	orgDao := OrgDao{}
-	orgDao.CnxParams = cnxParams
+	orgDao.dbPool = pool
 	return &orgDao
 }
 
@@ -25,75 +26,29 @@ func (orgRepo *OrgDao) CreateInTx(tx pgx.Tx, org model.OrganizationInterface) (i
 }
 
 func (orgRepo *OrgDao) Create(org model.OrganizationInterface) (int64, error) {
-	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
-	if err != nil {
-		return -1, err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
-	if err != nil {
-		return -1, err
-	}
 	var id int64
 	insertStmt := "insert into organizations(tenant_id,code,label,type,status) values($1,$2,$3,$4,$5) returning id"
-	errQuery := conn.QueryRow(context.Background(), insertStmt, org.GetTenantId(), org.GetCode(), org.GetLabel(), org.GetType(), org.GetStatus()).Scan(&id)
+	errQuery := orgRepo.dbPool.QueryRow(context.Background(), insertStmt, org.GetTenantId(), org.GetCode(), org.GetLabel(), org.GetType(), org.GetStatus()).Scan(&id)
 	return id, errQuery
 }
 
 func (orgRepo *OrgDao) Update(orgCode string, label string) error {
-	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
-	if err != nil {
-		return err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
-	if err != nil {
-		return err
-	}
 	updateStmt := "update organizations set label=$1 where code=$2"
-	_, errQuery := conn.Exec(context.Background(), updateStmt, label, orgCode)
+	_, errQuery := orgRepo.dbPool.Exec(context.Background(), updateStmt, label, orgCode)
 	return errQuery
 }
 
 func (orgRepo *OrgDao) Delete(orgCode string) error {
-	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
-	if err != nil {
-		return err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
 	deleteStmt := "delete from organizations where code=$1"
-	_, errQuery := conn.Exec(context.Background(), deleteStmt, orgCode)
+	_, errQuery := orgRepo.dbPool.Exec(context.Background(), deleteStmt, orgCode)
 	return errQuery
 }
 
 func (orgRepo *OrgDao) FindByCode(code string) (model.OrganizationInterface, error) {
-	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
-	if err != nil {
-		return nil, err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
 	selStmt := "select id,tenant_id,code,label,type,status from organizations where code=$1"
-	rows, e := conn.Query(context.Background(), selStmt, code)
-	if err != nil {
-		return nil, err
+	rows, e := orgRepo.dbPool.Query(context.Background(), selStmt, code)
+	if e != nil {
+		return nil, e
 	}
 	defer rows.Close()
 
@@ -104,9 +59,9 @@ func (orgRepo *OrgDao) FindByCode(code string) (model.OrganizationInterface, err
 		var rsCode string
 		var label string
 		var status model.OrganizationStatus
-		err = rows.Scan(&id, &tenantId, &rsCode, &label, &rsType, &status)
+		errScan := rows.Scan(&id, &tenantId, &rsCode, &label, &rsType, &status)
 		if e != nil {
-			return nil, err
+			return nil, errScan
 		}
 		org := model.Organization{}
 		org.SetId(id)
@@ -121,20 +76,10 @@ func (orgRepo *OrgDao) FindByCode(code string) (model.OrganizationInterface, err
 }
 
 func (orgRepo *OrgDao) FindAll(tenantId int64) ([]model.OrganizationInterface, error) {
-	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
-	if err != nil {
-		return nil, err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
 	selStmt := "select id,tenant_id,code,label,type,status from organizations where tenant_id=$1"
-	rows, e := conn.Query(context.Background(), selStmt, tenantId)
-	if err != nil {
-		return nil, err
+	rows, errQry := orgRepo.dbPool.Query(context.Background(), selStmt, tenantId)
+	if errQry != nil {
+		return nil, errQry
 	}
 
 	defer rows.Close()
@@ -146,9 +91,9 @@ func (orgRepo *OrgDao) FindAll(tenantId int64) ([]model.OrganizationInterface, e
 		var label string
 		var kind string
 		var status int64
-		err = rows.Scan(&id, &tenantId, &rsCode, &label, &kind, &status)
-		if e != nil {
-			return nil, err
+		errScan := rows.Scan(&id, &tenantId, &rsCode, &label, &kind, &status)
+		if errScan != nil {
+			return nil, errScan
 		}
 		org := model.Organization{}
 		org.SetId(id)
@@ -163,21 +108,11 @@ func (orgRepo *OrgDao) FindAll(tenantId int64) ([]model.OrganizationInterface, e
 }
 
 func (orgRepo *OrgDao) ExistsByCode(tenantId int64, code string) (bool, error) {
-	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
-	if err != nil {
-		return false, err
-	}
-	defer func(conn *pgx.Conn, ctx context.Context) {
-		err := conn.Close(ctx)
-		if err != nil {
-
-		}
-	}(conn, context.Background())
 	selStmt := "select count(1) from organizations where tenant_id=$1 and code=$2"
-	rows, e := conn.Query(context.Background(), selStmt, tenantId, code)
+	rows, e := orgRepo.dbPool.Query(context.Background(), selStmt, tenantId, code)
 	defer rows.Close()
 	if e != nil {
-		return false, err
+		return false, e
 	}
 	cnt := 0
 	for rows.Next() {

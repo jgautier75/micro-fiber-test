@@ -1,9 +1,11 @@
 package main
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
@@ -30,11 +32,23 @@ func main() {
 	dbUrl := k.String("app.pgUrl")
 	logCfg := k.String("app.logFile")
 
+	dbConfig, errDbCfg := pgxpool.ParseConfig(dbUrl)
+	if errDbCfg != nil {
+		panic(errDbCfg)
+	}
+	dbConfig.MinConns = 5
+	dbConfig.MaxConns = 10
+
+	dbPool, poolErr := pgxpool.NewWithConfig(context.Background(), dbConfig)
+	if poolErr != nil {
+		panic(poolErr)
+	}
+
 	// Setup service & dao
-	orgDao := impl.NewOrgDao(dbUrl)
-	sectorDao := impl.NewSectorDao(dbUrl)
-	userDao := impl.NewUserDao(dbUrl)
-	orgSvc := svcImpl.NewOrgService(orgDao, sectorDao)
+	orgDao := impl.NewOrgDao(dbPool)
+	sectorDao := impl.NewSectorDao(dbPool)
+	userDao := impl.NewUserDao(dbPool)
+	orgSvc := svcImpl.NewOrgService(dbPool, orgDao, sectorDao)
 	sectorSvc := svcImpl.NewSectorService(sectorDao)
 	userSvc := svcImpl.NewUserService(userDao)
 
