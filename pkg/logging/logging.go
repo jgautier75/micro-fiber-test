@@ -32,8 +32,7 @@ func New(cfg logger.Config, zapLogger *zap.Logger) fiber.Handler {
 	}
 
 	var (
-		once sync.Once
-		//mu         sync.Mutex
+		once       sync.Once
 		errHandler fiber.ErrorHandler
 	)
 
@@ -45,7 +44,6 @@ func New(cfg logger.Config, zapLogger *zap.Logger) fiber.Handler {
 
 		// Set error handler once
 		once.Do(func() {
-			// get longested possible path
 			// override error handler
 			errHandler = c.App().ErrorHandler
 		})
@@ -71,6 +69,7 @@ func New(cfg logger.Config, zapLogger *zap.Logger) fiber.Handler {
 		for k, v := range c.GetReqHeaders() {
 			reqHeaders = append(reqHeaders, k+"="+v)
 		}
+
 		zapLogger.Debug("HTTP",
 			zap.Field{Key: "method", Type: zapcore.StringType, String: c.Method()},
 			zap.Field{Key: "path", Type: zapcore.StringType, String: c.Path()},
