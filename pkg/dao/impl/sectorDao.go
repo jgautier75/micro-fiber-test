@@ -9,10 +9,13 @@ import (
 )
 
 type SectorDao struct {
+	CnxParams string
 }
 
-func NewSectorDao() api.SectorDaoInterface {
-	return &SectorDao{}
+func NewSectorDao(cnxParams string) api.SectorDaoInterface {
+	sectorDao := SectorDao{}
+	sectorDao.CnxParams = cnxParams
+	return &sectorDao
 }
 
 func (s SectorDao) CreateInTx(tx pgx.Tx, sector model.SectorInterface) (int64, error) {
@@ -22,8 +25,8 @@ func (s SectorDao) CreateInTx(tx pgx.Tx, sector model.SectorInterface) (int64, e
 	return id, errQuery
 }
 
-func (s SectorDao) Create(cnxParams string, sector model.SectorInterface) (int64, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (s SectorDao) Create(sector model.SectorInterface) (int64, error) {
+	conn, err := pgx.Connect(context.Background(), s.CnxParams)
 	if err != nil {
 		return -1, err
 	}
@@ -42,8 +45,8 @@ func (s SectorDao) Create(cnxParams string, sector model.SectorInterface) (int64
 	return id, errQuery
 }
 
-func (s SectorDao) DeleteByOrgId(cnxParams string, orgId int64) error {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (s SectorDao) DeleteByOrgId(orgId int64) error {
+	conn, err := pgx.Connect(context.Background(), s.CnxParams)
 	if err != nil {
 		return err
 	}
@@ -64,8 +67,8 @@ func (s SectorDao) DeleteByOrgId(cnxParams string, orgId int64) error {
 	return nil
 }
 
-func (s SectorDao) FindSectorsByTenantOrg(cnxParams string, tenantId int64, orgId int64) ([]model.SectorInterface, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (s SectorDao) FindSectorsByTenantOrg(tenantId int64, orgId int64) ([]model.SectorInterface, error) {
+	conn, err := pgx.Connect(context.Background(), s.CnxParams)
 	if err != nil {
 		return nil, err
 	}
@@ -115,8 +118,8 @@ func (s SectorDao) FindSectorsByTenantOrg(cnxParams string, tenantId int64, orgI
 	return sectors, nil
 }
 
-func (s SectorDao) FindByLabel(cnxParams string, defaultTenantId int64, label string) (int64, string, error) {
-	conn, errCnx := pgx.Connect(context.Background(), cnxParams)
+func (s SectorDao) FindByLabel(defaultTenantId int64, label string) (int64, string, error) {
+	conn, errCnx := pgx.Connect(context.Background(), s.CnxParams)
 	if errCnx != nil {
 		return 0, "", errCnx
 	}
@@ -147,8 +150,8 @@ func (s SectorDao) FindByLabel(cnxParams string, defaultTenantId int64, label st
 	return 0, "", nil
 }
 
-func (s SectorDao) FindByCode(cnxParams string, defaultTenantId int64, code string) (model.SectorInterface, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (s SectorDao) FindByCode(defaultTenantId int64, code string) (model.SectorInterface, error) {
+	conn, err := pgx.Connect(context.Background(), s.CnxParams)
 	if err != nil {
 		return nil, err
 	}
@@ -199,8 +202,8 @@ func (s SectorDao) FindByCode(cnxParams string, defaultTenantId int64, code stri
 	return nil, nil
 }
 
-func (s SectorDao) FindRootSector(cnxParams string, defaultTenantId int64, orgId int64) (int64, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (s SectorDao) FindRootSector(defaultTenantId int64, orgId int64) (int64, error) {
+	conn, err := pgx.Connect(context.Background(), s.CnxParams)
 	if err != nil {
 		return 0, err
 	}
@@ -234,8 +237,8 @@ func (s SectorDao) FindRootSector(cnxParams string, defaultTenantId int64, orgId
 	return sectorId, nil
 }
 
-func (s SectorDao) DeleteSector(cnxParams string, defaultTenantId int64, sectorId int64) error {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (s SectorDao) DeleteSector(defaultTenantId int64, sectorId int64) error {
+	conn, err := pgx.Connect(context.Background(), s.CnxParams)
 	if err != nil {
 		return err
 	}

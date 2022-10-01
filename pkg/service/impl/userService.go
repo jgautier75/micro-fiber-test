@@ -16,11 +16,11 @@ func NewUserService(daoP api.UserDaoInterface) svcApi.UserServiceInterface {
 	return &UserService{dao: daoP}
 }
 
-func (u UserService) Create(cnxParams string, defautTenantId int64, user model.UserInterface) (int64, error) {
+func (u UserService) Create(defautTenantId int64, user model.UserInterface) (int64, error) {
 	user.SetTenantId(defautTenantId)
 
 	// Login is unique
-	idUsr, _, errLogin := u.dao.IsLoginInUse(cnxParams, user.GetLogin())
+	idUsr, _, errLogin := u.dao.IsLoginInUse(user.GetLogin())
 	if errLogin != nil {
 		return 0, errLogin
 	}
@@ -29,7 +29,7 @@ func (u UserService) Create(cnxParams string, defautTenantId int64, user model.U
 	}
 
 	// Email is unique
-	idUsr, _, errEmail := u.dao.IsEmailInUse(cnxParams, user.GetEmail())
+	idUsr, _, errEmail := u.dao.IsEmailInUse(user.GetEmail())
 	if errEmail != nil {
 		return 0, errEmail
 	}
@@ -37,7 +37,7 @@ func (u UserService) Create(cnxParams string, defautTenantId int64, user model.U
 		return 0, errors.New(commons.UserEmailAlreadyInUse)
 	}
 
-	id, createErr := u.dao.Create(cnxParams, user)
+	id, createErr := u.dao.Create(user)
 	if createErr != nil {
 		return 0, createErr
 	} else {
@@ -45,10 +45,10 @@ func (u UserService) Create(cnxParams string, defautTenantId int64, user model.U
 	}
 }
 
-func (u UserService) Update(cnxParams string, user model.UserInterface) error {
+func (u UserService) Update(user model.UserInterface) error {
 
 	// Login is unique
-	_, extId, errLogin := u.dao.IsLoginInUse(cnxParams, user.GetLogin())
+	_, extId, errLogin := u.dao.IsLoginInUse(user.GetLogin())
 	if errLogin != nil {
 		return errLogin
 	}
@@ -57,7 +57,7 @@ func (u UserService) Update(cnxParams string, user model.UserInterface) error {
 	}
 
 	// Email is unique
-	_, extId, errEmail := u.dao.IsEmailInUse(cnxParams, user.GetEmail())
+	_, extId, errEmail := u.dao.IsEmailInUse(user.GetEmail())
 	if errEmail != nil {
 		return errEmail
 	}
@@ -65,15 +65,15 @@ func (u UserService) Update(cnxParams string, user model.UserInterface) error {
 		return errors.New(commons.UserEmailAlreadyInUse)
 	}
 
-	return u.dao.Update(cnxParams, user)
+	return u.dao.Update(user)
 }
 
-func (u UserService) FindByCriteria(cnxParams string, criteria model.UserFilterCriteria) (model.UserSearchResult, error) {
-	userSearchResult, err := u.dao.FindByCriteria(cnxParams, criteria)
+func (u UserService) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSearchResult, error) {
+	userSearchResult, err := u.dao.FindByCriteria(criteria)
 	if err != nil {
 		return userSearchResult, err
 	}
-	cnt, errCount := u.dao.CountByCriteria(cnxParams, criteria)
+	cnt, errCount := u.dao.CountByCriteria(criteria)
 	if errCount != nil {
 		return userSearchResult, err
 	}
@@ -81,10 +81,10 @@ func (u UserService) FindByCriteria(cnxParams string, criteria model.UserFilterC
 	return userSearchResult, nil
 }
 
-func (u UserService) FindByCode(cnxParams string, tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
-	return u.dao.FindByExternalId(cnxParams, tenantId, orgId, externalId)
+func (u UserService) FindByCode(tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
+	return u.dao.FindByExternalId(tenantId, orgId, externalId)
 }
 
-func (u UserService) Delete(cnxParams string, externalId string) error {
-	return u.dao.Delete(cnxParams, externalId)
+func (u UserService) Delete(externalId string) error {
+	return u.dao.Delete(externalId)
 }

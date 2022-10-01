@@ -3,9 +3,9 @@ package api
 import "micro-fiber-test/pkg/model"
 
 type SectorServiceInterface interface {
-	Create(cnxParams string, defautTenantId int64, sector model.SectorInterface) (int64, error)
-	FindSectorsByTenantOrg(cnxParams string, defaultTenantId int64, orgId int64) ([]model.SectorInterface, error)
-	FindByCode(cnxParams string, defaultTenantId int64, code string) (model.SectorInterface, error)
-	FindRootSectorId(cnxParams string, defaultTenantId int64, orgId int64) (int64, error)
-	DeleteSector(cnxParams string, defaultTenantId int64, sectorId int64) error
+	Create(defautTenantId int64, sector model.SectorInterface) (int64, error)
+	FindSectorsByTenantOrg(defaultTenantId int64, orgId int64) ([]model.SectorInterface, error)
+	FindByCode(defaultTenantId int64, code string) (model.SectorInterface, error)
+	FindRootSectorId(defaultTenantId int64, orgId int64) (int64, error)
+	DeleteSector(defaultTenantId int64, sectorId int64) error
 }

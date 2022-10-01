@@ -16,7 +16,7 @@ type OrganizationService struct {
 }
 
 func (orgService *OrganizationService) Create(cnxParams string, defaultTenant int64, organization model.OrganizationInterface) (int64, error) {
-	orgExists, err := orgService.orgDao.ExistsByCode(cnxParams, defaultTenant, organization.GetCode())
+	orgExists, err := orgService.orgDao.ExistsByCode(defaultTenant, organization.GetCode())
 	if err != nil {
 		return 0, err
 	}
@@ -73,49 +73,49 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 	}
 }
 
-func (orgService *OrganizationService) Update(cnxParams string, defaultTenant int64, orgCode string, label string) error {
-	orgExists, err := orgService.orgDao.ExistsByCode(cnxParams, defaultTenant, orgCode)
+func (orgService *OrganizationService) Update(defaultTenant int64, orgCode string, label string) error {
+	orgExists, err := orgService.orgDao.ExistsByCode(defaultTenant, orgCode)
 	if err != nil {
 		return err
 	}
 	if orgExists == false {
 		return errors.New(commons.OrgDoesNotExistByCode)
 	}
-	return orgService.orgDao.Update(cnxParams, orgCode, label)
+	return orgService.orgDao.Update(orgCode, label)
 }
 
-func (orgService *OrganizationService) Delete(cnxParams string, defaultTenant int64, orgCode string) error {
-	orgExists, err := orgService.orgDao.ExistsByCode(cnxParams, defaultTenant, orgCode)
+func (orgService *OrganizationService) Delete(defaultTenant int64, orgCode string) error {
+	orgExists, err := orgService.orgDao.ExistsByCode(defaultTenant, orgCode)
 	if err != nil {
 		return err
 	}
 	if orgExists == false {
 		return errors.New(commons.OrgDoesNotExistByCode)
 	}
-	org, err := orgService.orgDao.FindByCode(cnxParams, orgCode)
+	org, err := orgService.orgDao.FindByCode(orgCode)
 	if err != nil {
 		return err
 	}
-	errSector := orgService.sectDao.DeleteByOrgId(cnxParams, org.GetId())
+	errSector := orgService.sectDao.DeleteByOrgId(org.GetId())
 	if errSector != nil {
 		return errSector
 	}
-	return orgService.orgDao.Delete(cnxParams, orgCode)
+	return orgService.orgDao.Delete(orgCode)
 }
 
-func (orgService *OrganizationService) FindByCode(cnxParams string, defaultTenant int64, code string) (model.OrganizationInterface, error) {
-	orgExists, err := orgService.orgDao.ExistsByCode(cnxParams, defaultTenant, code)
+func (orgService *OrganizationService) FindByCode(defaultTenant int64, code string) (model.OrganizationInterface, error) {
+	orgExists, err := orgService.orgDao.ExistsByCode(defaultTenant, code)
 	if err != nil {
 		return nil, err
 	}
 	if orgExists == false {
 		return nil, errors.New(commons.OrgDoesNotExistByCode)
 	}
-	return orgService.orgDao.FindByCode(cnxParams, code)
+	return orgService.orgDao.FindByCode(code)
 }
 
-func (orgService *OrganizationService) FindAll(cnxParams string, defaultTenant int64) ([]model.OrganizationInterface, error) {
-	orgs, err := orgService.orgDao.FindAll(cnxParams, defaultTenant)
+func (orgService *OrganizationService) FindAll(defaultTenant int64) ([]model.OrganizationInterface, error) {
+	orgs, err := orgService.orgDao.FindAll(defaultTenant)
 	if err != nil {
 		return nil, err
 	}

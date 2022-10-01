@@ -92,14 +92,14 @@ func TestDao(t *testing.T) {
 	}
 
 	// Test create organization
-	orgRepo := NewOrgDao()
+	orgRepo := NewOrgDao(pgUrl)
 	org := model.Organization{}
 	org.SetStatus(model.OrgStatusActive)
 	org.SetLabel("Test Org")
 	org.SetCode("test")
 	org.SetTenantId(1)
 	org.SetType(model.OrgTypeCommunity)
-	orgId, err := orgRepo.Create(pgUrl, &org)
+	orgId, err := orgRepo.Create(&org)
 	if err != nil {
 		fmt.Printf("pgError [%v]", err)
 	} else {

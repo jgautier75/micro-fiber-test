@@ -17,12 +17,12 @@ import (
 	"strconv"
 )
 
-func MakeUserCreateEndpoint(dbmsUrl string, defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeUserCreateEndpoint(defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
 
 		// Ensure organization exists
-		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
@@ -54,7 +54,7 @@ func MakeUserCreateEndpoint(dbmsUrl string, defaultTenantId int64, userSvc api.U
 		usrModel.SetOrgId(org.GetId())
 		extUUID := uuid.New().String()
 		usrModel.SetExternalId(extUUID)
-		_, errCreate := userSvc.Create(dbmsUrl, defaultTenantId, &usrModel)
+		_, errCreate := userSvc.Create(defaultTenantId, &usrModel)
 		if errCreate != nil {
 			if errCreate != nil {
 				if errCreate.Error() == commons.UserLoginAlreadyInUse || errCreate.Error() == commons.UserEmailAlreadyInUse {
@@ -74,12 +74,12 @@ func MakeUserCreateEndpoint(dbmsUrl string, defaultTenantId int64, userSvc api.U
 	}
 }
 
-func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeUserSearchFilter(defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
 
 		// Ensure organization exists
-		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
@@ -96,7 +96,7 @@ func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.Use
 			return errCriteria
 		}
 
-		usersCriteria, errFind := userSvc.FindByCriteria(dbmsUrl, userFilterCriteria)
+		usersCriteria, errFind := userSvc.FindByCriteria(userFilterCriteria)
 		if errFind != nil {
 			return errFind
 		}
@@ -127,12 +127,12 @@ func MakeUserSearchFilter(dbmsUrl string, defaultTenantId int64, userSvc api.Use
 	}
 }
 
-func MakeUserFindByCode(dbmsUrl string, defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeUserFindByCode(defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
 
 		// Ensure organization exists
-		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
@@ -145,7 +145,7 @@ func MakeUserFindByCode(dbmsUrl string, defaultTenantId int64, userSvc api.UserS
 		}
 
 		usrId := ctx.Params("userId")
-		u, errFind := userSvc.FindByCode(dbmsUrl, defaultTenantId, org.GetId(), usrId)
+		u, errFind := userSvc.FindByCode(defaultTenantId, org.GetId(), usrId)
 		if errFind != nil {
 			return errFind
 		}
@@ -155,12 +155,12 @@ func MakeUserFindByCode(dbmsUrl string, defaultTenantId int64, userSvc api.UserS
 	}
 }
 
-func MakeUserDelete(dbmsUrl string, defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeUserDelete(defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
 
 		// Ensure organization exists
-		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
@@ -173,7 +173,7 @@ func MakeUserDelete(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 		}
 
 		usrId := ctx.Params("userId")
-		u, errFind := userSvc.FindByCode(dbmsUrl, defaultTenantId, org.GetId(), usrId)
+		u, errFind := userSvc.FindByCode(defaultTenantId, org.GetId(), usrId)
 		if errFind != nil {
 			return errFind
 		}
@@ -183,7 +183,7 @@ func MakeUserDelete(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 			return ctx.JSON(apiErr)
 		}
 
-		errDel := userSvc.Delete(dbmsUrl, usrId)
+		errDel := userSvc.Delete(usrId)
 		if errDel != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
@@ -194,12 +194,12 @@ func MakeUserDelete(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 	}
 }
 
-func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeUserUpdate(defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
 
 		// Ensure organization exists
-		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
@@ -212,7 +212,7 @@ func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 		}
 
 		usrId := ctx.Params("userId")
-		u, errFind := userSvc.FindByCode(dbmsUrl, defaultTenantId, org.GetId(), usrId)
+		u, errFind := userSvc.FindByCode(defaultTenantId, org.GetId(), usrId)
 		if errFind != nil {
 			return errFind
 		}
@@ -243,7 +243,7 @@ func MakeUserUpdate(dbmsUrl string, defaultTenantId int64, userSvc api.UserServi
 		usrModel.SetOrgId(org.GetId())
 		usrModel.SetExternalId(usrId)
 
-		errUpdate := userSvc.Update(dbmsUrl, &usrModel)
+		errUpdate := userSvc.Update(&usrModel)
 		if errUpdate != nil {
 			if errUpdate.Error() == commons.UserLoginAlreadyInUse || errUpdate.Error() == commons.UserEmailAlreadyInUse {
 				apiError := contracts.ConvertToFunctionalError(errUpdate, fiber.StatusConflict)
