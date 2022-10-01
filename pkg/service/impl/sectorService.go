@@ -53,3 +53,11 @@ func (sectorSvc SectorService) FindRootSectorId(defaultTenantId int64, orgId int
 func (sectorSvc SectorService) DeleteSector(defaultTenantId int64, sectorId int64) error {
 	return sectorSvc.dao.DeleteSector(defaultTenantId, sectorId)
 }
+
+func (sectorSvc SectorService) Update(defaultTenantId int64, id int64, label string) error {
+	return sectorSvc.dao.Update(defaultTenantId, id, label)
+}
+
+func (sectorSvc SectorService) FindByLabel(defaultTenantId int64, label string) (int64, string, error) {
+	return sectorSvc.dao.FindByLabel(defaultTenantId, label)
+}
