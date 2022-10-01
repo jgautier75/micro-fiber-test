@@ -16,14 +16,6 @@ import (
 
 func main() {
 
-	// Setup service & dao
-	orgDao := impl.NewOrgDao()
-	sectorDao := impl.NewSectorDao()
-	userDao := impl.NewUserDao()
-	orgSvc := svcImpl.NewOrgService(orgDao, sectorDao)
-	sectorSvc := svcImpl.NewSectorService(sectorDao)
-	userSvc := svcImpl.NewUserService(userDao)
-
 	// Load config file
 	var k = koanf.New(".")
 	err := k.Load(file.Provider("config/config.yaml"), yaml.Parser())
@@ -33,6 +25,14 @@ func main() {
 	targetPort := k.String("http.server.port")
 	defaultTenantId := k.Int64("app.tenant")
 	dbUrl := k.String("app.pgUrl")
+
+	// Setup service & dao
+	orgDao := impl.NewOrgDao(dbUrl)
+	sectorDao := impl.NewSectorDao(dbUrl)
+	userDao := impl.NewUserDao(dbUrl)
+	orgSvc := svcImpl.NewOrgService(orgDao, sectorDao)
+	sectorSvc := svcImpl.NewSectorService(sectorDao)
+	userSvc := svcImpl.NewUserService(userDao)
 
 	var defErrorHandler = func(c *fiber.Ctx, err error) error {
 		var e *fiber.Error
@@ -68,22 +68,22 @@ func main() {
 
 	// Organizations
 	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(dbUrl, defaultTenantId, orgSvc))
-	app.Put("/api/v1/organizations/:orgCode", endpoints.MakeOrgUpdateEndpoint(dbUrl, defaultTenantId, orgSvc))
-	app.Delete("/api/v1/organizations/:orgCode", endpoints.MakeOrgDeleteEndpoint(dbUrl, defaultTenantId, orgSvc))
-	app.Get("/api/v1/organizations/:orgCode", endpoints.MakeOrgFindByCodeEndpoint(dbUrl, defaultTenantId, orgSvc))
-	app.Get("/api/v1/organizations", endpoints.MakeOrgFindAll(dbUrl, defaultTenantId, orgSvc))
+	app.Put("/api/v1/organizations/:orgCode", endpoints.MakeOrgUpdateEndpoint(defaultTenantId, orgSvc))
+	app.Delete("/api/v1/organizations/:orgCode", endpoints.MakeOrgDeleteEndpoint(defaultTenantId, orgSvc))
+	app.Get("/api/v1/organizations/:orgCode", endpoints.MakeOrgFindByCodeEndpoint(defaultTenantId, orgSvc))
+	app.Get("/api/v1/organizations", endpoints.MakeOrgFindAll(defaultTenantId, orgSvc))
 
 	// Sectors
-	app.Get("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorsFindByOrga(dbUrl, defaultTenantId, orgSvc, sectorSvc))
-	app.Post("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorCreateEndpoint(dbUrl, defaultTenantId, orgSvc, sectorSvc))
-	app.Delete("/api/v1/organizations/:orgCode/sectors/:sectorCode", endpoints.MakeSectorDeleteEndpoint(dbUrl, defaultTenantId, orgSvc, sectorSvc))
+	app.Get("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorsFindByOrga(defaultTenantId, orgSvc, sectorSvc))
+	app.Post("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorCreateEndpoint(defaultTenantId, orgSvc, sectorSvc))
+	app.Delete("/api/v1/organizations/:orgCode/sectors/:sectorCode", endpoints.MakeSectorDeleteEndpoint(defaultTenantId, orgSvc, sectorSvc))
 
 	// Users
-	app.Post("/api/v1/organizations/:orgCode/users", endpoints.MakeUserCreateEndpoint(dbUrl, defaultTenantId, userSvc, orgSvc))
-	app.Get("/api/v1/organizations/:orgCode/users", endpoints.MakeUserSearchFilter(dbUrl, defaultTenantId, userSvc, orgSvc))
-	app.Get("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserFindByCode(dbUrl, defaultTenantId, userSvc, orgSvc))
-	app.Put("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserUpdate(dbUrl, defaultTenantId, userSvc, orgSvc))
-	app.Delete("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserDelete(dbUrl, defaultTenantId, userSvc, orgSvc))
+	app.Post("/api/v1/organizations/:orgCode/users", endpoints.MakeUserCreateEndpoint(defaultTenantId, userSvc, orgSvc))
+	app.Get("/api/v1/organizations/:orgCode/users", endpoints.MakeUserSearchFilter(defaultTenantId, userSvc, orgSvc))
+	app.Get("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserFindByCode(defaultTenantId, userSvc, orgSvc))
+	app.Put("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserUpdate(defaultTenantId, userSvc, orgSvc))
+	app.Delete("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserDelete(defaultTenantId, userSvc, orgSvc))
 
 	errTls := app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
 	if errTls != nil {

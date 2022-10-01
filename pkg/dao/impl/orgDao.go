@@ -8,10 +8,13 @@ import (
 )
 
 type OrgDao struct {
+	CnxParams string
 }
 
-func NewOrgDao() api.OrgDaoInterface {
-	return &OrgDao{}
+func NewOrgDao(cnxParams string) api.OrgDaoInterface {
+	orgDao := OrgDao{}
+	orgDao.CnxParams = cnxParams
+	return &orgDao
 }
 
 func (orgRepo *OrgDao) CreateInTx(tx pgx.Tx, org model.OrganizationInterface) (int64, error) {
@@ -21,8 +24,8 @@ func (orgRepo *OrgDao) CreateInTx(tx pgx.Tx, org model.OrganizationInterface) (i
 	return id, errQuery
 }
 
-func (orgRepo *OrgDao) Create(cnxParams string, org model.OrganizationInterface) (int64, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (orgRepo *OrgDao) Create(org model.OrganizationInterface) (int64, error) {
+	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
 	if err != nil {
 		return -1, err
 	}
@@ -41,8 +44,8 @@ func (orgRepo *OrgDao) Create(cnxParams string, org model.OrganizationInterface)
 	return id, errQuery
 }
 
-func (orgRepo *OrgDao) Update(cnxParams string, orgCode string, label string) error {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (orgRepo *OrgDao) Update(orgCode string, label string) error {
+	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
 	if err != nil {
 		return err
 	}
@@ -60,8 +63,8 @@ func (orgRepo *OrgDao) Update(cnxParams string, orgCode string, label string) er
 	return errQuery
 }
 
-func (orgRepo *OrgDao) Delete(cnxParams string, orgCode string) error {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (orgRepo *OrgDao) Delete(orgCode string) error {
+	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
 	if err != nil {
 		return err
 	}
@@ -76,8 +79,8 @@ func (orgRepo *OrgDao) Delete(cnxParams string, orgCode string) error {
 	return errQuery
 }
 
-func (orgRepo *OrgDao) FindByCode(cnxParams string, code string) (model.OrganizationInterface, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (orgRepo *OrgDao) FindByCode(code string) (model.OrganizationInterface, error) {
+	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
 	if err != nil {
 		return nil, err
 	}
@@ -117,8 +120,8 @@ func (orgRepo *OrgDao) FindByCode(cnxParams string, code string) (model.Organiza
 	return nil, nil
 }
 
-func (orgRepo *OrgDao) FindAll(cnxParams string, tenantId int64) ([]model.OrganizationInterface, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (orgRepo *OrgDao) FindAll(tenantId int64) ([]model.OrganizationInterface, error) {
+	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
 	if err != nil {
 		return nil, err
 	}
@@ -159,8 +162,8 @@ func (orgRepo *OrgDao) FindAll(cnxParams string, tenantId int64) ([]model.Organi
 	return orgs, nil
 }
 
-func (orgRepo *OrgDao) ExistsByCode(cnxParams string, tenantId int64, code string) (bool, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (orgRepo *OrgDao) ExistsByCode(tenantId int64, code string) (bool, error) {
+	conn, err := pgx.Connect(context.Background(), orgRepo.CnxParams)
 	if err != nil {
 		return false, err
 	}

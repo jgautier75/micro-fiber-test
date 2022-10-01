@@ -16,9 +16,9 @@ func NewSectorService(daoP api.SectorDaoInterface) svcApi.SectorServiceInterface
 	return &SectorService{dao: daoP}
 }
 
-func (sectorSvc SectorService) Create(cnxParams string, defautTenantId int64, sector model.SectorInterface) (int64, error) {
+func (sectorSvc SectorService) Create(defautTenantId int64, sector model.SectorInterface) (int64, error) {
 	sector.SetTenantId(defautTenantId)
-	id, _, err := sectorSvc.dao.FindByLabel(cnxParams, defautTenantId, sector.GetLabel())
+	id, _, err := sectorSvc.dao.FindByLabel(defautTenantId, sector.GetLabel())
 	if err != nil {
 		return 0, err
 	}
@@ -26,7 +26,7 @@ func (sectorSvc SectorService) Create(cnxParams string, defautTenantId int64, se
 		return 0, errors.New(commons.SectorAlreadyExist)
 	}
 
-	id, createErr := sectorSvc.dao.Create(cnxParams, sector)
+	id, createErr := sectorSvc.dao.Create(sector)
 	if createErr != nil {
 		return 0, createErr
 	} else {
@@ -34,22 +34,22 @@ func (sectorSvc SectorService) Create(cnxParams string, defautTenantId int64, se
 	}
 }
 
-func (sectorSvc SectorService) FindSectorsByTenantOrg(cnxParams string, defaultTenantId int64, orgId int64) ([]model.SectorInterface, error) {
-	sectors, err := sectorSvc.dao.FindSectorsByTenantOrg(cnxParams, defaultTenantId, orgId)
+func (sectorSvc SectorService) FindSectorsByTenantOrg(defaultTenantId int64, orgId int64) ([]model.SectorInterface, error) {
+	sectors, err := sectorSvc.dao.FindSectorsByTenantOrg(defaultTenantId, orgId)
 	if err != nil {
 		return nil, err
 	}
 	return sectors, nil
 }
 
-func (sectorSvc SectorService) FindByCode(cnxParams string, defaultTenantId int64, code string) (model.SectorInterface, error) {
-	return sectorSvc.dao.FindByCode(cnxParams, defaultTenantId, code)
+func (sectorSvc SectorService) FindByCode(defaultTenantId int64, code string) (model.SectorInterface, error) {
+	return sectorSvc.dao.FindByCode(defaultTenantId, code)
 }
 
-func (sectorSvc SectorService) FindRootSectorId(cnxParams string, defaultTenantId int64, orgId int64) (int64, error) {
-	return sectorSvc.dao.FindRootSector(cnxParams, defaultTenantId, orgId)
+func (sectorSvc SectorService) FindRootSectorId(defaultTenantId int64, orgId int64) (int64, error) {
+	return sectorSvc.dao.FindRootSector(defaultTenantId, orgId)
 }
 
-func (sectorSvc SectorService) DeleteSector(cnxParams string, defaultTenantId int64, sectorId int64) error {
-	return sectorSvc.dao.DeleteSector(cnxParams, defaultTenantId, sectorId)
+func (sectorSvc SectorService) DeleteSector(defaultTenantId int64, sectorId int64) error {
+	return sectorSvc.dao.DeleteSector(defaultTenantId, sectorId)
 }

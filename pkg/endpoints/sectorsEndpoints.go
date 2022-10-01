@@ -16,10 +16,10 @@ import (
 	"micro-fiber-test/pkg/validation"
 )
 
-func MakeSectorsFindByOrga(dbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeSectorsFindByOrga(defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
-		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
@@ -31,7 +31,7 @@ func MakeSectorsFindByOrga(dbmsUrl string, defaultTenantId int64, orgSvc api.Org
 			return ctx.JSON(apiErr)
 		}
 
-		sectorsList, errFindAll := sectSvc.FindSectorsByTenantOrg(dbmsUrl, defaultTenantId, org.GetId())
+		sectorsList, errFindAll := sectSvc.FindSectorsByTenantOrg(defaultTenantId, org.GetId())
 		if errFindAll != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindAll)
@@ -56,12 +56,12 @@ func MakeSectorsFindByOrga(dbmsUrl string, defaultTenantId int64, orgSvc api.Org
 	}
 }
 
-func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeSectorCreateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
 
 		// Ensure organization exists
-		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
@@ -96,7 +96,7 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 		secModel.SetCode(codeUUID)
 		if sectorReq.ParentCode != "" {
 			// Find parent sector
-			parentSector, errParent := sectSvc.FindByCode(dbmsUrl, defaultTenantId, sectorReq.ParentCode)
+			parentSector, errParent := sectSvc.FindByCode(defaultTenantId, sectorReq.ParentCode)
 			if errParent != nil {
 				return errParent
 			}
@@ -110,7 +110,7 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			}
 		} else {
 			// If parent sector not set, inherits from root
-			rootSector, err := sectSvc.FindRootSectorId(dbmsUrl, defaultTenantId, org.GetId())
+			rootSector, err := sectSvc.FindRootSectorId(defaultTenantId, org.GetId())
 			if err != nil {
 				return err
 			}
@@ -122,7 +122,7 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			secModel.SetDepth(1)
 		}
 
-		_, errCreate := sectSvc.Create(dbmsUrl, defaultTenantId, &secModel)
+		_, errCreate := sectSvc.Create(defaultTenantId, &secModel)
 		if errCreate != nil {
 			if errCreate.Error() == commons.SectorAlreadyExist {
 				_ = ctx.SendStatus(fiber.StatusConflict)
@@ -141,12 +141,12 @@ func MakeSectorCreateEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 	}
 }
 
-func MakeSectorDeleteEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
+func MakeSectorDeleteEndpoint(defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgCode := ctx.Params("orgCode")
 
 		// Ensure organization exists
-		org, errFindOrga := orgSvc.FindByCode(dbmsUrl, defaultTenantId, orgCode)
+		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errFindOrga)
@@ -160,7 +160,7 @@ func MakeSectorDeleteEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 
 		// Ensure sector exists
 		sectorCode := ctx.Params("sectorCode")
-		sector, errSect := sectSvc.FindByCode(dbmsUrl, defaultTenantId, sectorCode)
+		sector, errSect := sectSvc.FindByCode(defaultTenantId, sectorCode)
 		if errSect != nil {
 			return errSect
 		}
@@ -170,7 +170,7 @@ func MakeSectorDeleteEndpoint(dbmsUrl string, defaultTenantId int64, orgSvc api.
 			return ctx.JSON(apiErr)
 		}
 
-		errDelete := sectSvc.DeleteSector(dbmsUrl, defaultTenantId, sector.GetId())
+		errDelete := sectSvc.DeleteSector(defaultTenantId, sector.GetId())
 		if errDelete != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiErr := contracts.ConvertToInternalError(errDelete)

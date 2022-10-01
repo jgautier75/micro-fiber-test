@@ -11,14 +11,17 @@ import (
 )
 
 type UserDao struct {
+	CnxParams string
 }
 
-func NewUserDao() api.UserDaoInterface {
-	return &UserDao{}
+func NewUserDao(cnxParams string) api.UserDaoInterface {
+	userDao := UserDao{}
+	userDao.CnxParams = cnxParams
+	return &userDao
 }
 
-func (u UserDao) Create(cnxParams string, user model.UserInterface) (int64, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (u UserDao) Create(user model.UserInterface) (int64, error) {
+	conn, err := pgx.Connect(context.Background(), u.CnxParams)
 	if err != nil {
 		return -1, err
 	}
@@ -37,8 +40,8 @@ func (u UserDao) Create(cnxParams string, user model.UserInterface) (int64, erro
 	return id, errQuery
 }
 
-func (u UserDao) Update(cnxParams string, user model.UserInterface) error {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (u UserDao) Update(user model.UserInterface) error {
+	conn, err := pgx.Connect(context.Background(), u.CnxParams)
 	if err != nil {
 		return err
 	}
@@ -59,8 +62,8 @@ func (u UserDao) Update(cnxParams string, user model.UserInterface) error {
 	return nil
 }
 
-func (u UserDao) CountByCriteria(cnxParams string, criteria model.UserFilterCriteria) (int, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (u UserDao) CountByCriteria(criteria model.UserFilterCriteria) (int, error) {
+	conn, err := pgx.Connect(context.Background(), u.CnxParams)
 	if err != nil {
 		return 0, err
 	}
@@ -91,8 +94,8 @@ func (u UserDao) CountByCriteria(cnxParams string, criteria model.UserFilterCrit
 	return cnt, nil
 }
 
-func (u UserDao) FindByCriteria(cnxParams string, criteria model.UserFilterCriteria) (model.UserSearchResult, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (u UserDao) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSearchResult, error) {
+	conn, err := pgx.Connect(context.Background(), u.CnxParams)
 	searchResults := model.UserSearchResult{}
 	if err != nil {
 		return searchResults, err
@@ -160,8 +163,8 @@ func (u UserDao) FindByCriteria(cnxParams string, criteria model.UserFilterCrite
 	return searchResults, nil
 }
 
-func (u UserDao) FindByExternalId(cnxParams string, tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (u UserDao) FindByExternalId(tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
+	conn, err := pgx.Connect(context.Background(), u.CnxParams)
 	if err != nil {
 		return nil, err
 	}
@@ -208,8 +211,8 @@ func (u UserDao) FindByExternalId(cnxParams string, tenantId int64, orgId int64,
 	return &userInterface, nil
 }
 
-func (u UserDao) IsLoginInUse(cnxParams string, login string) (int64, string, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (u UserDao) IsLoginInUse(login string) (int64, string, error) {
+	conn, err := pgx.Connect(context.Background(), u.CnxParams)
 	if err != nil {
 		return 0, "", err
 	}
@@ -241,8 +244,8 @@ func (u UserDao) IsLoginInUse(cnxParams string, login string) (int64, string, er
 	return 0, "", nil
 }
 
-func (u UserDao) IsEmailInUse(cnxParams string, email string) (int64, string, error) {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (u UserDao) IsEmailInUse(email string) (int64, string, error) {
+	conn, err := pgx.Connect(context.Background(), u.CnxParams)
 	if err != nil {
 		return 0, "", err
 	}
@@ -307,8 +310,8 @@ func computeFindByCriteriaQuery(qryPrefix string, criteria model.UserFilterCrite
 	return fullQry, values
 }
 
-func (u UserDao) Delete(cnxParams string, userExtId string) error {
-	conn, err := pgx.Connect(context.Background(), cnxParams)
+func (u UserDao) Delete(userExtId string) error {
+	conn, err := pgx.Connect(context.Background(), u.CnxParams)
 	if err != nil {
 		return err
 	}
