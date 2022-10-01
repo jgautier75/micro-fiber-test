@@ -17,6 +17,7 @@ import (
 	"micro-fiber-test/pkg/logging"
 	svcImpl "micro-fiber-test/pkg/service/impl"
 	"os"
+	"strconv"
 )
 
 func main() {
@@ -30,14 +31,26 @@ func main() {
 	targetPort := k.String("http.server.port")
 	defaultTenantId := k.Int64("app.tenant")
 	dbUrl := k.String("app.pgUrl")
+	poolMin := k.String("app.pgPoolMin")
+	poolMax := k.String("app.pgPoolMax")
 	logCfg := k.String("app.logFile")
 
 	dbConfig, errDbCfg := pgxpool.ParseConfig(dbUrl)
 	if errDbCfg != nil {
 		panic(errDbCfg)
 	}
-	dbConfig.MinConns = 5
-	dbConfig.MaxConns = 10
+
+	pgMin, errMin := strconv.Atoi(poolMin)
+	if errMin != nil {
+		panic(errMin)
+	}
+	pgMax, errMax := strconv.Atoi(poolMax)
+	if errMax != nil {
+		panic(errMax)
+	}
+
+	dbConfig.MinConns = int32(pgMin)
+	dbConfig.MaxConns = int32(pgMax)
 
 	dbPool, poolErr := pgxpool.NewWithConfig(context.Background(), dbConfig)
 	if poolErr != nil {
