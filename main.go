@@ -4,14 +4,18 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/logger"
+	fiberLogger "github.com/gofiber/fiber/v2/middleware/logger"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 	"micro-fiber-test/pkg/contracts"
 	"micro-fiber-test/pkg/dao/impl"
 	"micro-fiber-test/pkg/endpoints"
+	"micro-fiber-test/pkg/logging"
 	svcImpl "micro-fiber-test/pkg/service/impl"
+	"os"
 )
 
 func main() {
@@ -60,11 +64,27 @@ func main() {
 
 	app := fiber.New(fConfig)
 
-	app.Use(logger.New(logger.Config{
-		TimeFormat: "2006-01-02T15:04:05-0700",
-		TimeZone:   "UTC",
-		Format:     "[${time}] - [${ip}]:${port} ${status} - ${method} - ${path}\n<<<<<<<<<< Request\n${reqHeaders}\n${body}\n>>>>>>>>>> Response\n${protocol}:${status}\nBody:${resBody}\n",
-	}))
+	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = zapcore.ISO8601TimeEncoder
+	fileEncoder := zapcore.NewJSONEncoder(config)
+	consoleEncoder := zapcore.NewConsoleEncoder(config)
+	logFile, _ := os.OpenFile("fiber-test.log", os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	writer := zapcore.AddSync(logFile)
+	defaultLogLevel := zapcore.DebugLevel
+	core := zapcore.NewTee(
+		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
+		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), defaultLogLevel),
+	)
+	zapLogger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+
+	logger, _ := zap.NewProduction()
+	defer logger.Sync()
+
+	app.Use(logging.New(
+		fiberLogger.Config{
+			TimeFormat: "2006-01-02T15:04:05-0700",
+			TimeZone:   "UTC",
+		}, zapLogger))
 
 	// Organizations
 	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(dbUrl, defaultTenantId, orgSvc))
