@@ -247,6 +247,10 @@ func MakeUserUpdate(defaultTenantId int64, userSvc api.UserServiceInterface, org
 				apiError := contracts.ConvertToFunctionalError(errUpdate, fiber.StatusConflict)
 				_ = ctx.SendStatus(fiber.StatusConflict)
 				return ctx.JSON(apiError)
+			} else {
+				_ = ctx.SendStatus(fiber.StatusInternalServerError)
+				apiErr := contracts.ConvertToInternalError(errUpdate)
+				return ctx.JSON(apiErr)
 			}
 		}
 
