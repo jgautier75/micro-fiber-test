@@ -42,8 +42,8 @@ func MakeSectorsFindByOrga(defaultTenantId int64, orgSvc api.OrganizationService
 				sgResponse := converters.ConvertSectorModelToSectorResp(s)
 				sectorsResponseList[inc] = sgResponse
 			}
-			s, err := helpers.BuildSectorsHierarchy(sectorsResponseList)
-			if err != nil {
+			s, errHierarchy := helpers.BuildSectorsHierarchy(sectorsResponseList)
+			if errHierarchy != nil {
 				return nil
 			}
 			sectListResponse := sectors.SectorListResponse{
