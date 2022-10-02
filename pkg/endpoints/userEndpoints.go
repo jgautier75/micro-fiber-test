@@ -56,12 +56,10 @@ func MakeUserCreateEndpoint(defaultTenantId int64, userSvc api.UserServiceInterf
 		usrModel.SetExternalId(extUUID)
 		_, errCreate := userSvc.Create(defaultTenantId, &usrModel)
 		if errCreate != nil {
-			if errCreate != nil {
-				if errCreate.Error() == commons.UserLoginAlreadyInUse || errCreate.Error() == commons.UserEmailAlreadyInUse {
-					apiError := contracts.ConvertToFunctionalError(errCreate, fiber.StatusConflict)
-					_ = ctx.SendStatus(fiber.StatusConflict)
-					return ctx.JSON(apiError)
-				}
+			if errCreate.Error() == commons.UserLoginAlreadyInUse || errCreate.Error() == commons.UserEmailAlreadyInUse {
+				apiError := contracts.ConvertToFunctionalError(errCreate, fiber.StatusConflict)
+				_ = ctx.SendStatus(fiber.StatusConflict)
+				return ctx.JSON(apiError)
 			} else {
 				apiError := contracts.ConvertToInternalError(errCreate)
 				_ = ctx.SendStatus(fiber.StatusInternalServerError)
