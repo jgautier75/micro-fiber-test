@@ -7,3 +7,6 @@ app:
   pgPoolMin: 5
   pgPoolMax: 5
   logFile: ./access.log
+  oauthClientId: fe776acfe3df20bae9eb
+  oauthClientSecret: 18733805950f7b29477ed4dde4e188f6df18e4b0
+  oauthCallback: https://github.com/login/oauth/access_token?client_id=%s&client_secret=%s&code=%s

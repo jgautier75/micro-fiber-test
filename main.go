@@ -34,6 +34,9 @@ func main() {
 	poolMin := k.String("app.pgPoolMin")
 	poolMax := k.String("app.pgPoolMax")
 	logCfg := k.String("app.logFile")
+	clientId := k.String("app.oauthClientId")
+	clientSecret := k.String("app.oauthClientSecret")
+	oauthCallback := k.String("app.oauthCallback")
 
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -47,6 +50,11 @@ func main() {
 		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), defaultLogLevel),
 	)
 	zapLogger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+
+	zapLogger.Info("OAuth2",
+		zap.Field{Key: "clientId", Type: zapcore.StringType, String: clientId},
+		zap.Field{Key: "clientSecret", Type: zapcore.StringType, String: clientSecret},
+	)
 
 	zapLogger.Info("CnxPool -> Parsing configuration")
 	dbConfig, errDbCfg := pgxpool.ParseConfig(dbUrl)
@@ -106,6 +114,10 @@ func main() {
 	zapLogger.Info("Application -> Setup")
 	app := fiber.New(fConfig)
 	app.Use(logging.New(zapLogger))
+
+	app.Static("/", "./static")
+	// OAuth
+	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(oauthCallback, clientId, clientSecret))
 
 	// Organizations
 	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(dbUrl, defaultTenantId, orgSvc))
