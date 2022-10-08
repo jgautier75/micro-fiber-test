@@ -18,6 +18,7 @@ import (
 	"micro-fiber-test/pkg/logging"
 	svcImpl "micro-fiber-test/pkg/service/impl"
 	"os"
+	"os/signal"
 	"strconv"
 	"time"
 )
@@ -32,60 +33,27 @@ func main() {
 	}
 	targetPort := k.String("http.server.port")
 	defaultTenantId := k.Int64("app.tenant")
-	dbUrl := k.String("app.pgUrl")
-	poolMin := k.String("app.pgPoolMin")
-	poolMax := k.String("app.pgPoolMax")
 	logCfg := k.String("app.logFile")
 	clientId := k.String("app.oauthClientId")
 	clientSecret := k.String("app.oauthClientSecret")
 	oauthCallback := k.String("app.oauthCallback")
 	oauthRedirectUri := k.String("app.oauthRedirectUri")
 	oauthGitlab := k.String("app.oauthGitlab")
+	dbUrl := k.String("app.pgUrl")
 
-	config := zap.NewProductionEncoderConfig()
-	config.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-		enc.AppendString(t.UTC().Format("2006-01-02T15:04:05Z0700"))
-	}
-	fileEncoder := zapcore.NewJSONEncoder(config)
-	consoleEncoder := zapcore.NewConsoleEncoder(config)
-	logFile, _ := os.OpenFile(logCfg, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	writer := zapcore.AddSync(logFile)
-	defaultLogLevel := zapcore.DebugLevel
-	core := zapcore.NewTee(
-		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), defaultLogLevel),
-	)
-	zapLogger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+	zapLogger := configureLogger(logCfg)
 
 	zapLogger.Info("OAuth2",
 		zap.Field{Key: "clientId", Type: zapcore.StringType, String: clientId},
 		zap.Field{Key: "clientSecret", Type: zapcore.StringType, String: clientSecret},
 	)
 
-	zapLogger.Info("CnxPool -> Parsing configuration")
-	dbConfig, errDbCfg := pgxpool.ParseConfig(dbUrl)
-	if errDbCfg != nil {
-		panic(errDbCfg)
-	}
-	pgMin, errMin := strconv.Atoi(poolMin)
-	if errMin != nil {
-		panic(errMin)
-	}
-	pgMax, errMax := strconv.Atoi(poolMax)
-	if errMax != nil {
-		panic(errMax)
-	}
-	dbConfig.MinConns = int32(pgMin)
-	dbConfig.MaxConns = int32(pgMax)
-
-	zapLogger.Info("CnxPool -> Initialize pool")
-	dbPool, poolErr := pgxpool.NewWithConfig(context.Background(), dbConfig)
+	dbPool, poolErr := configureCnxPool(k, zapLogger)
 	if poolErr != nil {
 		panic(poolErr)
 	}
 
 	zapLogger.Info("Dao & Services -> Setup & inject")
-	// Setup service & dao
 	orgDao := impl.NewOrgDao(dbPool)
 	sectorDao := impl.NewSectorDao(dbPool)
 	userDao := impl.NewUserDao(dbPool)
@@ -122,6 +90,17 @@ func main() {
 
 	zapLogger.Info("Application -> Setup")
 	app := fiber.New(fConfig)
+
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	serverShutdown := make(chan struct{})
+	go func() {
+		_ = <-c
+		fmt.Println("Gracefully shutting down...")
+		_ = app.Shutdown()
+		serverShutdown <- struct{}{}
+	}()
+
 	app.Use(logging.New(zapLogger))
 
 	app.Static("/", "./static")
@@ -155,4 +134,52 @@ func main() {
 	if errTls != nil {
 		fmt.Printf("ListenTLS error [%s]", errTls)
 	}
+
+	zapLogger.Info("Closing connections pool")
+	dbPool.Close()
+
+}
+
+func configureLogger(logCfg string) *zap.Logger {
+	config := zap.NewProductionEncoderConfig()
+	config.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(t.UTC().Format("2006-01-02T15:04:05Z0700"))
+	}
+	fileEncoder := zapcore.NewJSONEncoder(config)
+	consoleEncoder := zapcore.NewConsoleEncoder(config)
+	logFile, _ := os.OpenFile(logCfg, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
+	writer := zapcore.AddSync(logFile)
+	defaultLogLevel := zapcore.DebugLevel
+	core := zapcore.NewTee(
+		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
+		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), defaultLogLevel),
+	)
+	zapLogger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+	return zapLogger
+}
+
+func configureCnxPool(k *koanf.Koanf, zapLogger *zap.Logger) (*pgxpool.Pool, error) {
+
+	dbUrl := k.String("app.pgUrl")
+	poolMin := k.String("app.pgPoolMin")
+	poolMax := k.String("app.pgPoolMax")
+
+	zapLogger.Info("CnxPool -> Parse configuration")
+	dbConfig, errDbCfg := pgxpool.ParseConfig(dbUrl)
+	if errDbCfg != nil {
+		panic(errDbCfg)
+	}
+	pgMin, errMin := strconv.Atoi(poolMin)
+	if errMin != nil {
+		panic(errMin)
+	}
+	pgMax, errMax := strconv.Atoi(poolMax)
+	if errMax != nil {
+		panic(errMax)
+	}
+	dbConfig.MinConns = int32(pgMin)
+	dbConfig.MaxConns = int32(pgMax)
+
+	zapLogger.Info("CnxPool -> Initialize pool")
+	return pgxpool.NewWithConfig(context.Background(), dbConfig)
 }
