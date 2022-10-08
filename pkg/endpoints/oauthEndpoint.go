@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"io"
 	"micro-fiber-test/pkg/commons"
 	"micro-fiber-test/pkg/contracts"
@@ -14,27 +15,43 @@ import (
 	"net/http"
 	"net/url"
 	"strings"
-	"time"
 )
 
 const oAuthState = "oauthstate"
 
-func MakeOAuthAuthorize(oauthCallback string, oAuthClientId string, oauthClientSecret string) func(ctx *fiber.Ctx) error {
+func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientId string, oauthClientSecret string) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		httpClient := http.Client{}
 		code := ctx.Query("code")
 		reqState := ctx.Query("state")
-		oAuthStateValue := ctx.Cookies(oAuthState)
+
 		decState, errDecode := url.QueryUnescape(reqState)
 		if errDecode != nil {
 			contracts.ConvertToInternalError(errDecode)
 		}
 
-		if oAuthStateValue != decState {
+		httpSession, errSession := store.Get(ctx)
+		if errSession != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiError := contracts.ConvertToInternalError(errSession)
+			return ctx.JSON(apiError)
+		}
+
+		sessionOAuth := httpSession.Get(oAuthState)
+		decodedSessionOAuth, errDecodeSessionOAuth := url.QueryUnescape(sessionOAuth.(string))
+		if errDecodeSessionOAuth != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiError := contracts.ConvertToInternalError(errDecodeSessionOAuth)
+			return ctx.JSON(apiError)
+		}
+
+		if decodedSessionOAuth != decState {
 			apiError := contracts.ConvertToFunctionalError(errors.New(commons.OAuthStateMismatch), fiber.StatusConflict)
 			_ = ctx.SendStatus(fiber.StatusConflict)
 			return ctx.JSON(apiError)
 		}
+
+		httpSession.Delete(oAuthState)
 
 		reqURL := fmt.Sprintf(oauthCallback, oAuthClientId, oauthClientSecret, code)
 		req, errOauth := http.NewRequest(http.MethodPost, reqURL, nil)
@@ -67,7 +84,7 @@ func MakeOAuthAuthorize(oauthCallback string, oAuthClientId string, oauthClientS
 	}
 }
 
-func MakeGitlabAuthentication(oauthGitlab string, clientId string, redirectUri string) func(ctx *fiber.Ctx) error {
+func MakeGitlabAuthentication(store *session.Store, oauthGitlab string, clientId string, redirectUri string) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		var s strings.Builder
 		state, errState := generateState(28)
@@ -77,14 +94,14 @@ func MakeGitlabAuthentication(oauthGitlab string, clientId string, redirectUri s
 			return ctx.JSON(apiError)
 		}
 
-		// Store state in cookie
-		var expiration = time.Now().Add(2 * time.Hour)
-		cook := fiber.Cookie{
-			Name:    oAuthState,
-			Expires: expiration,
-			Secure:  false,
-			Value:   state,
+		httpSession, errSession := store.Get(ctx)
+		if errSession != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiError := contracts.ConvertToInternalError(errSession)
+			return ctx.JSON(apiError)
 		}
+		httpSession.Set(oAuthState, state)
+		_ = httpSession.Save()
 
 		s.WriteString(oauthGitlab)
 		s.WriteString("?client_id=")
@@ -95,8 +112,6 @@ func MakeGitlabAuthentication(oauthGitlab string, clientId string, redirectUri s
 		s.WriteString("&scope=user")
 		s.WriteString("&redirect_uri=")
 		s.WriteString(redirectUri)
-		fmt.Println(s.String())
-		ctx.Cookie(&cook)
 		return ctx.Redirect(s.String())
 	}
 }
