@@ -20,6 +20,7 @@ import (
 	"os"
 	"os/signal"
 	"strconv"
+	"syscall"
 	"time"
 )
 
@@ -90,17 +91,6 @@ func main() {
 
 	zapLogger.Info("Application -> Setup")
 	app := fiber.New(fConfig)
-
-	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
-	serverShutdown := make(chan struct{})
-	go func() {
-		_ = <-c
-		fmt.Println("Gracefully shutting down...")
-		_ = app.Shutdown()
-		serverShutdown <- struct{}{}
-	}()
-
 	app.Use(logging.New(zapLogger))
 
 	app.Static("/", "./static")
@@ -129,11 +119,19 @@ func main() {
 	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(store, oauthGitlab, clientId, oauthRedirectUri))
 	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, oauthCallback, clientId, clientSecret))
 
-	zapLogger.Info("Application -> ListenTLS")
-	errTls := app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
-	if errTls != nil {
-		fmt.Printf("ListenTLS error [%s]", errTls)
-	}
+	go func() {
+		zapLogger.Info("Application -> ListenTLS")
+		if errTls := app.ListenTLS(":"+targetPort, "cert.pem", "key.pem"); errTls != nil {
+			fmt.Printf("ListenTLS error [%s]", errTls)
+		}
+	}()
+
+	c := make(chan os.Signal, 1)                    // Create channel to signify a signal being sent
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM) // When an interrupt or termination signal is sent, notify the channel
+
+	_ = <-c // This blocks the main thread until an interrupt is received
+	fmt.Println("Gracefully shutting down...")
+	_ = app.Shutdown()
 
 	zapLogger.Info("Closing connections pool")
 	dbPool.Close()
