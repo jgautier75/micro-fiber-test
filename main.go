@@ -19,6 +19,7 @@ import (
 	svcImpl "micro-fiber-test/pkg/service/impl"
 	"os"
 	"strconv"
+	"time"
 )
 
 func main() {
@@ -42,7 +43,9 @@ func main() {
 	oauthGitlab := k.String("app.oauthGitlab")
 
 	config := zap.NewProductionEncoderConfig()
-	config.EncodeTime = zapcore.ISO8601TimeEncoder
+	config.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+		enc.AppendString(t.UTC().Format("2006-01-02T15:04:05Z0700"))
+	}
 	fileEncoder := zapcore.NewJSONEncoder(config)
 	consoleEncoder := zapcore.NewConsoleEncoder(config)
 	logFile, _ := os.OpenFile(logCfg, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)

@@ -25,18 +25,19 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 		code := ctx.Query("code")
 		reqState := ctx.Query("state")
 
+		// Decode state from query
 		decState, errDecode := url.QueryUnescape(reqState)
 		if errDecode != nil {
 			contracts.ConvertToInternalError(errDecode)
 		}
 
+		// Get state from session and decode
 		httpSession, errSession := store.Get(ctx)
 		if errSession != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiError := contracts.ConvertToInternalError(errSession)
 			return ctx.JSON(apiError)
 		}
-
 		sessionOAuth := httpSession.Get(oAuthState)
 		decodedSessionOAuth, errDecodeSessionOAuth := url.QueryUnescape(sessionOAuth.(string))
 		if errDecodeSessionOAuth != nil {
@@ -45,12 +46,14 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 			return ctx.JSON(apiError)
 		}
 
+		// Compare http request state and state from session
 		if decodedSessionOAuth != decState {
 			apiError := contracts.ConvertToFunctionalError(errors.New(commons.OAuthStateMismatch), fiber.StatusConflict)
 			_ = ctx.SendStatus(fiber.StatusConflict)
 			return ctx.JSON(apiError)
 		}
 
+		// Delete from session
 		httpSession.Delete(oAuthState)
 
 		reqURL := fmt.Sprintf(oauthCallback, oAuthClientId, oauthClientSecret, code)
