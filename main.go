@@ -37,6 +37,8 @@ func main() {
 	clientId := k.String("app.oauthClientId")
 	clientSecret := k.String("app.oauthClientSecret")
 	oauthCallback := k.String("app.oauthCallback")
+	oauthRedirectUri := k.String("app.oauthRedirectUri")
+	oauthGitlab := k.String("app.oauthGitlab")
 
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = zapcore.ISO8601TimeEncoder
@@ -116,8 +118,6 @@ func main() {
 	app.Use(logging.New(zapLogger))
 
 	app.Static("/", "./static")
-	// OAuth
-	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(oauthCallback, clientId, clientSecret))
 
 	// Organizations
 	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(dbUrl, defaultTenantId, orgSvc))
@@ -138,6 +138,10 @@ func main() {
 	app.Get("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserFindByCode(defaultTenantId, userSvc, orgSvc))
 	app.Put("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserUpdate(defaultTenantId, userSvc, orgSvc))
 	app.Delete("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserDelete(defaultTenantId, userSvc, orgSvc))
+
+	// OAuth and authentication
+	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(oauthGitlab, clientId, oauthRedirectUri))
+	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(oauthCallback, clientId, clientSecret))
 
 	zapLogger.Info("Application -> ListenTLS")
 	errTls := app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")

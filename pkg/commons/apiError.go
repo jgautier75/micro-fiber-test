@@ -12,6 +12,8 @@ const (
 	UserNotFound           = "user_not_found"
 	UserLoginAlreadyInUse  = "user_login_already_in_use"
 	UserEmailAlreadyInUse  = "user_email_already_in_use"
+	OAuthState             = "oauth_state_error"
+	OAuthStateMismatch     = "oauth_state_mismatch"
 )
 
 type ApiErrorType string
