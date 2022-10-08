@@ -9,4 +9,6 @@ app:
   logFile: ./access.log
   oauthClientId: fe776acfe3df20bae9eb
   oauthClientSecret: 18733805950f7b29477ed4dde4e188f6df18e4b0
+  oauthGitlab: https://github.com/login/oauth/authorize
   oauthCallback: https://github.com/login/oauth/access_token?client_id=%s&client_secret=%s&code=%s
+  oauthRedirectUri: https://localhost:8443/oauth/redirect
