@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -105,6 +106,9 @@ func main() {
 		return c.Status(fiber.StatusInternalServerError).JSON(contracts.ConvertToInternalError(err))
 	}
 
+	defCfg := session.ConfigDefault
+	store := session.New(defCfg)
+
 	fConfig := fiber.Config{
 		CaseSensitive:     true,
 		StrictRouting:     true,
@@ -140,8 +144,8 @@ func main() {
 	app.Delete("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserDelete(defaultTenantId, userSvc, orgSvc))
 
 	// OAuth and authentication
-	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(oauthGitlab, clientId, oauthRedirectUri))
-	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(oauthCallback, clientId, clientSecret))
+	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(store, oauthGitlab, clientId, oauthRedirectUri))
+	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, oauthCallback, clientId, clientSecret))
 
 	zapLogger.Info("Application -> ListenTLS")
 	errTls := app.ListenTLS(":"+targetPort, "cert.pem", "key.pem")
