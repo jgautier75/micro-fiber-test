@@ -43,7 +43,6 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 			return ctx.JSON(apiError)
 		}
 		sessionOAuth := httpSession.Get(oAuthState)
-		codeVerifier := httpSession.Get(cVerifier)
 		decodedSessionOAuth, errDecodeSessionOAuth := url.QueryUnescape(sessionOAuth.(string))
 		if errDecodeSessionOAuth != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
@@ -58,6 +57,7 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 			return ctx.JSON(apiError)
 		}
 
+		codeVerifier := httpSession.Get(cVerifier)
 		reqURL := fmt.Sprintf(oauthCallback, oAuthClientId, oauthClientSecret, code, codeVerifier)
 
 		// Delete from session
