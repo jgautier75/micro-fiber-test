@@ -28,12 +28,14 @@ func main() {
 	template := x509.Certificate{
 		SerialNumber: serialNumber,
 		Subject: pkix.Name{
-			Organization: []string{"My Corp"},
+			CommonName:         "POC",
+			OrganizationalUnit: []string{"FIBER"},
+			Country:            []string{"FR"},
+			Organization:       []string{"GO"},
 		},
-		DNSNames:  []string{"localhost"},
-		NotBefore: time.Now(),
-		NotAfter:  time.Now().Add(365 * 24 * time.Hour),
-
+		DNSNames:              []string{"localhost"},
+		NotBefore:             time.Now(),
+		NotAfter:              time.Now().Add(365 * 24 * time.Hour),
 		KeyUsage:              x509.KeyUsageDigitalSignature,
 		ExtKeyUsage:           []x509.ExtKeyUsage{x509.ExtKeyUsageServerAuth, x509.ExtKeyUsageClientAuth},
 		BasicConstraintsValid: true,
