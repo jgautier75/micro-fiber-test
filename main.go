@@ -117,7 +117,7 @@ func main() {
 	go func() {
 		zapLogger.Info("Application -> ListenTLS")
 		if errTls := app.ListenTLS(":"+targetPort, "cert.pem", "key.pem"); errTls != nil {
-			fmt.Printf("ListenTLS error [%s]", errTls)
+			panic(errTls)
 		}
 	}()
 
