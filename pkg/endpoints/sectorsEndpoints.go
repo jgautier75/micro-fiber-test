@@ -49,7 +49,7 @@ func MakeSectorsFindByOrga(defaultTenantId int64, orgSvc api.OrganizationService
 			sectListResponse := sectors.SectorListResponse{
 				Sectors: s,
 			}
-			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
+			ctx.GetRespHeader(fiber.HeaderContentType, fiber.MIMEApplicationJavaScriptCharsetUTF8)
 			_ = ctx.SendStatus(fiber.StatusOK)
 			return ctx.JSON(sectListResponse)
 		}
