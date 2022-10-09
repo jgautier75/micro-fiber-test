@@ -44,11 +44,6 @@ func main() {
 
 	zapLogger := configureLogger(logCfg)
 
-	zapLogger.Info("OAuth2",
-		zap.Field{Key: "clientId", Type: zapcore.StringType, String: clientId},
-		zap.Field{Key: "clientSecret", Type: zapcore.StringType, String: clientSecret},
-	)
-
 	dbPool, poolErr := configureCnxPool(k, zapLogger)
 	if poolErr != nil {
 		panic(poolErr)
