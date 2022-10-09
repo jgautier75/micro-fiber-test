@@ -159,7 +159,7 @@ func generateState(n int) (string, error) {
 	return state, nil
 }
 
-// Encode a string according to protect against CSRF attacks
+// Encode code verifier according to protect against CSRF attacks
 func encode(msg []byte) string {
 	encoded := base64.StdEncoding.EncodeToString(msg)
 	encoded = strings.Replace(encoded, "+", "-", -1)
