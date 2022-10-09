@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
@@ -17,7 +18,10 @@ import (
 	"strings"
 )
 
-const oAuthState = "oauthstate"
+const (
+	oAuthState = "oauthstate"
+	cVerifier  = "cverifier"
+)
 
 func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientId string, oauthClientSecret string) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
@@ -39,6 +43,7 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 			return ctx.JSON(apiError)
 		}
 		sessionOAuth := httpSession.Get(oAuthState)
+		codeVerifier := httpSession.Get(cVerifier)
 		decodedSessionOAuth, errDecodeSessionOAuth := url.QueryUnescape(sessionOAuth.(string))
 		if errDecodeSessionOAuth != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
@@ -53,10 +58,12 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 			return ctx.JSON(apiError)
 		}
 
+		reqURL := fmt.Sprintf(oauthCallback, oAuthClientId, oauthClientSecret, code, codeVerifier)
+
 		// Delete from session
 		httpSession.Delete(oAuthState)
+		httpSession.Delete(cVerifier)
 
-		reqURL := fmt.Sprintf(oauthCallback, oAuthClientId, oauthClientSecret, code)
 		req, errOauth := http.NewRequest(http.MethodPost, reqURL, nil)
 		if errOauth != nil {
 			apiError := contracts.ConvertToFunctionalError(errOauth, fiber.StatusConflict)
@@ -104,12 +111,35 @@ func MakeGitlabAuthentication(store *session.Store, oauthGitlab string, clientId
 			return ctx.JSON(apiError)
 		}
 		httpSession.Set(oAuthState, state)
+
+		// Generate code verifier
+		buf, errRnd := randomBytes(32)
+		if errRnd != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiError := contracts.ConvertToInternalError(errState)
+			return ctx.JSON(apiError)
+		}
+		encodedRandom := encode(buf)
+		httpSession.Set(cVerifier, encodedRandom)
 		_ = httpSession.Save()
+
+		h := sha256.New()
+		_, errSha := h.Write([]byte(encodedRandom))
+		shaChallenge := encode(h.Sum(nil))
+
+		if errSha != nil {
+			_ = ctx.SendStatus(fiber.StatusInternalServerError)
+			apiError := contracts.ConvertToInternalError(errSha)
+			return ctx.JSON(apiError)
+		}
 
 		s.WriteString(oauthGitlab)
 		s.WriteString("?client_id=")
 		s.WriteString(clientId)
 		s.WriteString("&response_type=code")
+		s.WriteString("&code_challenge=")
+		s.WriteString(shaChallenge)
+		s.WriteString("&code_challenge_method=S256")
 		s.WriteString("&state=")
 		s.WriteString(state)
 		s.WriteString("&scope=user")
@@ -127,4 +157,36 @@ func generateState(n int) (string, error) {
 	}
 	state := base64.StdEncoding.EncodeToString(data)
 	return state, nil
+}
+
+// Encode a string according to protect against CSRF attacks
+func encode(msg []byte) string {
+	encoded := base64.StdEncoding.EncodeToString(msg)
+	encoded = strings.Replace(encoded, "+", "-", -1)
+	encoded = strings.Replace(encoded, "/", "_", -1)
+	encoded = strings.Replace(encoded, "=", "", -1)
+	return encoded
+}
+
+// Generate a random string of specified length
+func randomBytes(length int) ([]byte, error) {
+	const charset = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+	const csLen = byte(len(charset))
+	output := make([]byte, 0, length)
+	for {
+		buf := make([]byte, length)
+		if _, err := io.ReadFull(rand.Reader, buf); err != nil {
+			return nil, fmt.Errorf("failed to read random bytes: %v", err)
+		}
+		for _, b := range buf {
+			// Avoid bias by using a value range that's a multiple of 62
+			if b < (csLen * 4) {
+				output = append(output, charset[b%csLen])
+
+				if len(output) == length {
+					return output, nil
+				}
+			}
+		}
+	}
 }
