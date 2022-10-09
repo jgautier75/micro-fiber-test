@@ -1,7 +1,6 @@
 package commons
 
 const (
-	ContentTypeHeader      = "Content-Type"
 	OrgAlreadyExistsByCode = "org_already_exists"
 	OrgDoesNotExistByCode  = "org_does_not_exist"
 	OrgNotFound            = "org_not_found"
