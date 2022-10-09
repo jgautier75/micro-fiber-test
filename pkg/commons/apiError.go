@@ -2,7 +2,6 @@ package commons
 
 const (
 	ContentTypeHeader      = "Content-Type"
-	ContentTypeJson        = "application/json; charset=utf-8"
 	OrgAlreadyExistsByCode = "org_already_exists"
 	OrgDoesNotExistByCode  = "org_does_not_exist"
 	OrgNotFound            = "org_not_found"
@@ -12,7 +11,6 @@ const (
 	UserNotFound           = "user_not_found"
 	UserLoginAlreadyInUse  = "user_login_already_in_use"
 	UserEmailAlreadyInUse  = "user_email_already_in_use"
-	OAuthState             = "oauth_state_error"
 	OAuthStateMismatch     = "oauth_state_mismatch"
 )
 

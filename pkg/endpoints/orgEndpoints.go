@@ -135,7 +135,7 @@ func MakeOrgFindByCodeEndpoint(defaultTenantId int64, orgSvc api.OrganizationSer
 			}
 		} else {
 			orgResponse := converters.ConvertOrgModelToOrgResp(org)
-			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
+			ctx.GetRespHeader(fiber.HeaderContentType, fiber.MIMEApplicationJavaScriptCharsetUTF8)
 			_ = ctx.SendStatus(fiber.StatusOK)
 			return ctx.JSON(orgResponse)
 		}
@@ -158,7 +158,7 @@ func MakeOrgFindAll(defaultTenantId int64, orgSvc api.OrganizationServiceInterfa
 			orgListResponse := orgs.OrganizationListResponse{
 				Organizations: orgResponseList,
 			}
-			ctx.GetRespHeader(commons.ContentTypeHeader, commons.ContentTypeJson)
+			ctx.GetRespHeader(fiber.HeaderContentType, fiber.MIMEApplicationJavaScriptCharsetUTF8)
 			_ = ctx.SendStatus(fiber.StatusOK)
 			return ctx.JSON(orgListResponse)
 		}
