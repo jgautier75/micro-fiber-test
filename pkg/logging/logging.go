@@ -68,8 +68,9 @@ func New(zapLogger *zap.Logger) fiber.Handler {
 			zapLogger.Debug("HTTP",
 				zap.Field{Key: "method", Type: zapcore.StringType, String: c.Method()},
 				zap.Field{Key: "path", Type: zapcore.StringType, String: c.Path()},
-				zap.Field{Key: "http.response.status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
 				zap.Field{Key: "ellapsed", Type: zapcore.Int64Type, Integer: duration.Milliseconds()},
+				zap.Field{Key: "http.request.headers", Type: zapcore.StringType, String: strings.Join(reqHeaders, "&")},
+				zap.Field{Key: "http.response.status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
 			)
 		}
 		return nil
