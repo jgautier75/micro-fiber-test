@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/gofiber/storage/redis"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -19,6 +20,7 @@ import (
 	svcImpl "micro-fiber-test/pkg/service/impl"
 	"os"
 	"os/signal"
+	"runtime"
 	"strconv"
 	"syscall"
 	"time"
@@ -41,6 +43,13 @@ func main() {
 	oauthRedirectUri := k.String("app.oauthRedirectUri")
 	oauthGitlab := k.String("app.oauthGitlab")
 	dbUrl := k.String("app.pgUrl")
+	redisHost := k.String("app.redisHost")
+	redisStrPort := k.String("app.redisPort")
+	redisPort, errRedis := strconv.Atoi(redisStrPort)
+	redisUser := k.String("app.redisUser")
+	redisPass := k.String("app.redisPass")
+
+	fmt.Printf("Redis port error [%v]", errRedis)
 
 	zapLogger := configureLogger(logCfg)
 
@@ -73,7 +82,22 @@ func main() {
 		return c.Status(fiber.StatusInternalServerError).JSON(contracts.ConvertToInternalError(err))
 	}
 
+	redisStorage := redis.New(redis.Config{
+		Host:      redisHost,
+		Port:      redisPort,
+		Username:  redisUser,
+		Password:  redisPass,
+		URL:       "",
+		Database:  0,
+		Reset:     false,
+		TLSConfig: nil,
+		PoolSize:  10 * runtime.GOMAXPROCS(0),
+	},
+	)
+
 	defCfg := session.ConfigDefault
+	defCfg.Storage = redisStorage
+
 	store := session.New(defCfg)
 
 	fConfig := fiber.Config{
