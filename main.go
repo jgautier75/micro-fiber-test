@@ -157,6 +157,7 @@ func main() {
 
 }
 
+// Configure logger
 func configureLogger(logCfg string) *zap.Logger {
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
@@ -175,6 +176,7 @@ func configureLogger(logCfg string) *zap.Logger {
 	return zapLogger
 }
 
+// Configure rdbms connection pool
 func configureCnxPool(k *koanf.Koanf, zapLogger *zap.Logger) (*pgxpool.Pool, error) {
 
 	dbUrl := k.String("app.pgUrl")
