@@ -117,7 +117,7 @@ func (u UserDao) FindByExternalId(tenantId int64, orgId int64, externalId string
 		return nil, errQuery
 	}
 	defer rows.Close()
-	userInterface := model.User{}
+	///var userInterface model.User
 	for rows.Next() {
 		var id int64
 		var extId string
@@ -142,7 +142,7 @@ func (u UserDao) FindByExternalId(tenantId int64, orgId int64, externalId string
 		userInterface.SetStatus(model.UserStatus(status))
 		return &userInterface, nil
 	}
-	return &userInterface, nil
+	return nil, nil
 }
 
 func (u UserDao) IsLoginInUse(login string) (int64, string, error) {

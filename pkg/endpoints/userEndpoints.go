@@ -147,9 +147,13 @@ func MakeUserFindByCode(defaultTenantId int64, userSvc api.UserServiceInterface,
 		if errFind != nil {
 			return errFind
 		}
-
-		_ = ctx.SendStatus(fiber.StatusOK)
-		return ctx.JSON(converters.ConvertFromDaoModelToUserResponse(u))
+		if u != nil {
+			_ = ctx.SendStatus(fiber.StatusOK)
+			return ctx.JSON(converters.ConvertFromDaoModelToUserResponse(u))
+		} else {
+			apiError := contracts.ConvertToFunctionalError(errors.New(commons.UserNotFound), fiber.StatusNotFound)
+			return ctx.JSON(apiError)
+		}
 	}
 }
 
