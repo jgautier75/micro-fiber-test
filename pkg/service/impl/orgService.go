@@ -22,57 +22,52 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 	if err != nil {
 		return 0, err
 	}
-	if orgExists == false {
-		conn, err := pgx.Connect(context.Background(), cnxParams)
-		if err != nil {
-			return -1, err
-		}
-		defer func(conn *pgx.Conn, ctx context.Context) {
-			err := conn.Close(ctx)
-			if err != nil {
-
-			}
-		}(conn, context.Background())
-
-		tx, err := conn.BeginTx(context.Background(), pgx.TxOptions{AccessMode: pgx.ReadWrite, IsoLevel: pgx.RepeatableRead})
-		if err != nil {
-			return 0, err
-		}
-		defer func() {
-			if err != nil {
-				err := tx.Rollback(context.Background())
-				if err != nil {
-					return
-				}
-			} else {
-				err := tx.Commit(context.Background())
-				if err != nil {
-					return
-				}
-			}
-		}()
-
-		id, err := orgService.orgDao.CreateInTx(tx, organization)
-		if err != nil {
-			return 0, err
-		} else {
-			sector := model.Sector{}
-			sector.SetLabel(organization.GetLabel())
-			sector.SetCode(organization.GetCode())
-			sector.SetTenantId(defaultTenant)
-			sector.SetSectorStatus(model.SectorStatusActive)
-			sector.SetDepth(0)
-			sector.SetHasParent(false)
-			sector.SetOrgId(id)
-			_, err := orgService.sectDao.CreateInTx(tx, &sector)
-			if err != nil {
-				return 0, err
-			}
-			return id, nil
-		}
-	} else {
+	if orgExists {
 		return 0, errors.New(commons.OrgAlreadyExistsByCode)
 	}
+	conn, errConnect := pgx.Connect(context.Background(), cnxParams)
+	if errConnect != nil {
+		return -1, errConnect
+	}
+	defer func(conn *pgx.Conn, ctx context.Context) {
+		_ = conn.Close(ctx)
+	}(conn, context.Background())
+
+	tx, errTx := conn.BeginTx(context.Background(), pgx.TxOptions{AccessMode: pgx.ReadWrite, IsoLevel: pgx.RepeatableRead})
+	if errTx != nil {
+		return 0, errTx
+	}
+	defer func() {
+		if errTx != nil {
+			errRbk := tx.Rollback(context.Background())
+			if errRbk != nil {
+				return
+			}
+		} else {
+			errCmt := tx.Commit(context.Background())
+			if errCmt != nil {
+				return
+			}
+		}
+	}()
+
+	id, errOrgCreateTx := orgService.orgDao.CreateInTx(tx, organization)
+	if errOrgCreateTx != nil {
+		return 0, errOrgCreateTx
+	}
+	sector := model.Sector{}
+	sector.SetLabel(organization.GetLabel())
+	sector.SetCode(organization.GetCode())
+	sector.SetTenantId(defaultTenant)
+	sector.SetSectorStatus(model.SectorStatusActive)
+	sector.SetDepth(0)
+	sector.SetHasParent(false)
+	sector.SetOrgId(id)
+	_, errSect := orgService.sectDao.CreateInTx(tx, &sector)
+	if errSect != nil {
+		return 0, errSect
+	}
+	return id, nil
 }
 
 func (orgService *OrganizationService) Update(defaultTenant int64, orgCode string, label string) error {
@@ -87,16 +82,16 @@ func (orgService *OrganizationService) Update(defaultTenant int64, orgCode strin
 }
 
 func (orgService *OrganizationService) Delete(defaultTenant int64, orgCode string) error {
-	orgExists, err := orgService.orgDao.ExistsByCode(defaultTenant, orgCode)
-	if err != nil {
-		return err
+	orgExists, errExists := orgService.orgDao.ExistsByCode(defaultTenant, orgCode)
+	if errExists != nil {
+		return errExists
 	}
 	if orgExists == false {
 		return errors.New(commons.OrgDoesNotExistByCode)
 	}
-	org, err := orgService.orgDao.FindByCode(orgCode)
-	if err != nil {
-		return err
+	org, errFind := orgService.orgDao.FindByCode(orgCode)
+	if errFind != nil {
+		return errFind
 	}
 	errSector := orgService.sectDao.DeleteByOrgId(org.GetId())
 	if errSector != nil {
@@ -106,9 +101,9 @@ func (orgService *OrganizationService) Delete(defaultTenant int64, orgCode strin
 }
 
 func (orgService *OrganizationService) FindByCode(defaultTenant int64, code string) (model.OrganizationInterface, error) {
-	orgExists, err := orgService.orgDao.ExistsByCode(defaultTenant, code)
-	if err != nil {
-		return nil, err
+	orgExists, errExists := orgService.orgDao.ExistsByCode(defaultTenant, code)
+	if errExists != nil {
+		return nil, errExists
 	}
 	if orgExists == false {
 		return nil, errors.New(commons.OrgDoesNotExistByCode)
