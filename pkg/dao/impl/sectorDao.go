@@ -43,7 +43,7 @@ func (s SectorDao) DeleteByOrgId(orgId int64) error {
 }
 
 func (s SectorDao) FindSectorsByTenantOrg(tenantId int64, orgId int64) ([]model.SectorInterface, error) {
-	selStmt := "select id,tenant_id,org_id,code,label,parent_id,has_parent,depth,status from sectors where tenant_id=$1 and org_id=$2"
+	selStmt := "select id,tenant_id,org_id,code,label,parent_id,has_parent,depth,status from sectors where tenant_id=$1 and org_id=$2 order by label asc"
 	rows, e := s.dbPool.Query(context.Background(), selStmt, tenantId, orgId)
 	defer rows.Close()
 	if e != nil {
