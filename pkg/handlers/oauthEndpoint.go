@@ -10,8 +10,8 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"io"
-	"micro-fiber-test/pkg/commons"
-	"micro-fiber-test/pkg/contracts"
+	"micro-fiber-test/pkg/dto/commons"
+	"micro-fiber-test/pkg/exceptions"
 	"micro-fiber-test/pkg/model"
 	"net/http"
 	"net/url"
@@ -32,27 +32,27 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 		// Decode state from query
 		decState, errDecode := url.QueryUnescape(reqState)
 		if errDecode != nil {
-			contracts.ConvertToInternalError(errDecode)
+			exceptions.ConvertToInternalError(errDecode)
 		}
 
 		// Get state from session and decode
 		httpSession, errSession := store.Get(ctx)
 		if errSession != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiError := contracts.ConvertToInternalError(errSession)
+			apiError := exceptions.ConvertToInternalError(errSession)
 			return ctx.JSON(apiError)
 		}
 		sessionOAuth := httpSession.Get(oAuthState)
 		decodedSessionOAuth, errDecodeSessionOAuth := url.QueryUnescape(sessionOAuth.(string))
 		if errDecodeSessionOAuth != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiError := contracts.ConvertToInternalError(errDecodeSessionOAuth)
+			apiError := exceptions.ConvertToInternalError(errDecodeSessionOAuth)
 			return ctx.JSON(apiError)
 		}
 
 		// Compare http request state and state from session
 		if decodedSessionOAuth != decState {
-			apiError := contracts.ConvertToFunctionalError(errors.New(commons.OAuthStateMismatch), fiber.StatusConflict)
+			apiError := exceptions.ConvertToFunctionalError(errors.New(commons.OAuthStateMismatch), fiber.StatusConflict)
 			_ = ctx.SendStatus(fiber.StatusConflict)
 			return ctx.JSON(apiError)
 		}
@@ -66,7 +66,7 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 
 		req, errOauth := http.NewRequest(http.MethodPost, reqURL, nil)
 		if errOauth != nil {
-			apiError := contracts.ConvertToFunctionalError(errOauth, fiber.StatusConflict)
+			apiError := exceptions.ConvertToFunctionalError(errOauth, fiber.StatusConflict)
 			_ = ctx.SendStatus(fiber.StatusConflict)
 			return ctx.JSON(apiError)
 		}
@@ -75,7 +75,7 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 		res, errHttp := httpClient.Do(req)
 		if errHttp != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiError := contracts.ConvertToInternalError(errHttp)
+			apiError := exceptions.ConvertToInternalError(errHttp)
 			return ctx.JSON(apiError)
 		}
 		defer func(Body io.ReadCloser) {
@@ -87,7 +87,7 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 		var t model.OAuthAccessResponse
 		if errDecode := json.NewDecoder(res.Body).Decode(&t); errDecode != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiError := contracts.ConvertToInternalError(errDecode)
+			apiError := exceptions.ConvertToInternalError(errDecode)
 			return ctx.JSON(apiError)
 		}
 		return ctx.Redirect("/welcome.html?access_token=" + t.AccessToken)
@@ -100,14 +100,14 @@ func MakeGitlabAuthentication(store *session.Store, oauthGitlab string, clientId
 		state, errState := generateState(28)
 		if errState != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiError := contracts.ConvertToInternalError(errState)
+			apiError := exceptions.ConvertToInternalError(errState)
 			return ctx.JSON(apiError)
 		}
 
 		httpSession, errSession := store.Get(ctx)
 		if errSession != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiError := contracts.ConvertToInternalError(errSession)
+			apiError := exceptions.ConvertToInternalError(errSession)
 			return ctx.JSON(apiError)
 		}
 		httpSession.Set(oAuthState, state)
@@ -116,7 +116,7 @@ func MakeGitlabAuthentication(store *session.Store, oauthGitlab string, clientId
 		buf, errRnd := randomBytes(32)
 		if errRnd != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiError := contracts.ConvertToInternalError(errState)
+			apiError := exceptions.ConvertToInternalError(errState)
 			return ctx.JSON(apiError)
 		}
 		encodedRandom := encode(buf)
@@ -129,7 +129,7 @@ func MakeGitlabAuthentication(store *session.Store, oauthGitlab string, clientId
 
 		if errSha != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiError := contracts.ConvertToInternalError(errSha)
+			apiError := exceptions.ConvertToInternalError(errSha)
 			return ctx.JSON(apiError)
 		}
 

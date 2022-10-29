@@ -1,8 +1,8 @@
-package contracts
+package exceptions
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"micro-fiber-test/pkg/commons"
+	"micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/validation"
 	"strconv"
 	"strings"

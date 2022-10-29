@@ -5,12 +5,11 @@ import (
 	"errors"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
-	"micro-fiber-test/pkg/commons"
-	"micro-fiber-test/pkg/contracts"
 	"micro-fiber-test/pkg/converters"
 	dtos "micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/dto/orgs"
 	"micro-fiber-test/pkg/dto/sectors"
+	"micro-fiber-test/pkg/exceptions"
 	"micro-fiber-test/pkg/helpers"
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
@@ -22,19 +21,19 @@ func MakeSectorsFindByOrga(defaultTenantId int64, orgSvc api.OrganizationService
 		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			apiErr := exceptions.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
 		if org == nil {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
-			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
+			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
 		}
 
 		sectorsList, errFindAll := sectSvc.FindSectorsByTenantOrg(defaultTenantId, org.GetId())
 		if errFindAll != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errFindAll)
+			apiErr := exceptions.ConvertToInternalError(errFindAll)
 			return ctx.JSON(apiErr)
 		} else {
 			sectorsResponseList := make([]sectors.SectorResponse, len(sectorsList), len(sectorsList))
@@ -64,12 +63,12 @@ func MakeSectorCreateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			apiErr := exceptions.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
 		if org == nil {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
-			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
+			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
 		}
 
@@ -77,7 +76,7 @@ func MakeSectorCreateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		sectorReq := orgs.CreateSectorReq{}
 		if err := ctx.BodyParser(&sectorReq); err != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(err)
+			apiErr := exceptions.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
 		}
 
@@ -85,7 +84,7 @@ func MakeSectorCreateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		validErr := validation.Validate(sectorReq)
 		if validErr != nil && len(validErr) > 0 {
 			_ = ctx.SendStatus(fiber.StatusBadRequest)
-			apiError := contracts.ConvertValidationError(validErr)
+			apiError := exceptions.ConvertValidationError(validErr)
 			return ctx.JSON(apiError)
 		}
 
@@ -124,13 +123,13 @@ func MakeSectorCreateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 
 		_, errCreate := sectSvc.Create(defaultTenantId, &secModel)
 		if errCreate != nil {
-			if errCreate.Error() == commons.SectorAlreadyExist {
+			if errCreate.Error() == dtos.SectorAlreadyExist {
 				_ = ctx.SendStatus(fiber.StatusConflict)
-				apiError := contracts.ConvertToFunctionalError(errCreate, fiber.StatusConflict)
+				apiError := exceptions.ConvertToFunctionalError(errCreate, fiber.StatusConflict)
 				return ctx.JSON(apiError)
 			} else {
 				_ = ctx.SendStatus(fiber.StatusInternalServerError)
-				apiError := contracts.ConvertToInternalError(errCreate)
+				apiError := exceptions.ConvertToInternalError(errCreate)
 				return ctx.JSON(apiError)
 			}
 		}
@@ -149,12 +148,12 @@ func MakeSectorDeleteEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			apiErr := exceptions.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
 		if org == nil {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
-			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
+			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
 		}
 
@@ -166,14 +165,14 @@ func MakeSectorDeleteEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		}
 		if sector == nil || sector.GetId() <= 0 {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
-			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.SectorNotFound), fiber.StatusNotFound)
+			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.SectorNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
 		}
 
 		errDelete := sectSvc.DeleteSector(defaultTenantId, sector.GetId())
 		if errDelete != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errDelete)
+			apiErr := exceptions.ConvertToInternalError(errDelete)
 			return ctx.JSON(apiErr)
 		}
 
@@ -190,12 +189,12 @@ func MakeSectorUpdateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errFindOrga)
+			apiErr := exceptions.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
 		if org == nil {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
-			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.OrgNotFound), fiber.StatusNotFound)
+			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
 		}
 
@@ -207,7 +206,7 @@ func MakeSectorUpdateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		}
 		if sector == nil || sector.GetId() <= 0 {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
-			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.SectorNotFound), fiber.StatusNotFound)
+			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.SectorNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
 		}
 
@@ -216,27 +215,27 @@ func MakeSectorUpdateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		}{}
 		if err := ctx.BodyParser(&payload); err != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(err)
+			apiErr := exceptions.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
 		}
 
 		idSec, codeSec, errSec := sectSvc.FindByLabel(defaultTenantId, payload.Label)
 		if errSec != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errSec)
+			apiErr := exceptions.ConvertToInternalError(errSec)
 			return ctx.JSON(apiErr)
 		}
 
 		if idSec > 0 && codeSec != sector.GetCode() {
 			_ = ctx.SendStatus(fiber.StatusConflict)
-			apiErr := contracts.ConvertToFunctionalError(errors.New(commons.SectorAlreadyExist), fiber.StatusConflict)
+			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.SectorAlreadyExist), fiber.StatusConflict)
 			return ctx.JSON(apiErr)
 		}
 
 		errDelete := sectSvc.Update(defaultTenantId, sector.GetId(), payload.Label)
 		if errDelete != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errDelete)
+			apiErr := exceptions.ConvertToInternalError(errDelete)
 			return ctx.JSON(apiErr)
 		}
 

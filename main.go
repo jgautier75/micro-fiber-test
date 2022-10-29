@@ -13,10 +13,10 @@ import (
 	"github.com/knadh/koanf/providers/file"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"micro-fiber-test/pkg/contracts"
-	"micro-fiber-test/pkg/dao/impl"
-	"micro-fiber-test/pkg/endpoints"
+	"micro-fiber-test/pkg/exceptions"
+	"micro-fiber-test/pkg/handlers"
 	"micro-fiber-test/pkg/logging"
+	"micro-fiber-test/pkg/repository/impl"
 	svcImpl "micro-fiber-test/pkg/service/impl"
 	"os"
 	"os/signal"
@@ -72,14 +72,14 @@ func main() {
 		if errors.As(err, &e) {
 			code = e.Code
 			if code >= fiber.StatusBadRequest && code < fiber.StatusInternalServerError {
-				apiError := contracts.ConvertToFunctionalError(err, code)
+				apiError := exceptions.ConvertToFunctionalError(err, code)
 				return c.Status(code).JSON(apiError)
 			} else {
-				apiError := contracts.ConvertToInternalError(err)
+				apiError := exceptions.ConvertToInternalError(err)
 				return c.Status(code).JSON(apiError)
 			}
 		}
-		return c.Status(fiber.StatusInternalServerError).JSON(contracts.ConvertToInternalError(err))
+		return c.Status(fiber.StatusInternalServerError).JSON(exceptions.ConvertToInternalError(err))
 	}
 
 	redisStorage := redis.New(redis.Config{
