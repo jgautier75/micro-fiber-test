@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"micro-fiber-test/pkg/dao/api"
 	"micro-fiber-test/pkg/model"
+	"micro-fiber-test/pkg/repository/api"
 )
 
 type SectorDao struct {

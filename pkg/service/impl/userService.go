@@ -2,9 +2,9 @@ package impl
 
 import (
 	"errors"
-	"micro-fiber-test/pkg/commons"
-	"micro-fiber-test/pkg/dao/api"
+	"micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/model"
+	"micro-fiber-test/pkg/repository/api"
 	svcApi "micro-fiber-test/pkg/service/api"
 )
 

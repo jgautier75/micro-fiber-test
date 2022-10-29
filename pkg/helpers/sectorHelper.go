@@ -2,7 +2,7 @@ package helpers
 
 import (
 	"errors"
-	"micro-fiber-test/pkg/commons"
+	"micro-fiber-test/pkg/dto/commons"
 	dtos "micro-fiber-test/pkg/dto/sectors"
 )
 

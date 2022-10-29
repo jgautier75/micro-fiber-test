@@ -5,9 +5,9 @@ import (
 	"errors"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"micro-fiber-test/pkg/commons"
-	daoApi "micro-fiber-test/pkg/dao/api"
+	"micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/model"
+	daoApi "micro-fiber-test/pkg/repository/api"
 	svcApi "micro-fiber-test/pkg/service/api"
 )
 

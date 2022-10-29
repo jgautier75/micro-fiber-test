@@ -5,11 +5,10 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
-	"micro-fiber-test/pkg/commons"
-	"micro-fiber-test/pkg/contracts"
 	"micro-fiber-test/pkg/converters"
 	dtos "micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/dto/orgs"
+	"micro-fiber-test/pkg/exceptions"
 	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
@@ -21,14 +20,14 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 		var json = jsoniter.ConfigCompatibleWithStandardLibrary
 		if err := json.Unmarshal(ctx.Body(), &orgReq); err != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(err)
+			apiErr := exceptions.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
 		}
 
 		validErr := validation.Validate(orgReq)
 		if validErr != nil && len(validErr) > 0 {
 			_ = ctx.SendStatus(fiber.StatusBadRequest)
-			apiError := contracts.ConvertValidationError(validErr)
+			apiError := exceptions.ConvertValidationError(validErr)
 			return ctx.JSON(apiError)
 		}
 
@@ -39,22 +38,22 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 		case model.OrgStatusDraft, model.OrgStatusActive, model.OrgStatusInactive, model.OrgStatusDeleted:
 		default:
 			_ = ctx.SendStatus(fiber.StatusBadRequest)
-			apiErr := commons.ApiError{
+			apiErr := dtos.ApiError{
 				Code:    fiber.StatusBadRequest,
-				Kind:    string(commons.ErrorTypeFunctional),
+				Kind:    string(dtos.ErrorTypeFunctional),
 				Message: fmt.Sprintf("Invalid org status [%d]", orgReq.Status),
 			}
 			return ctx.JSON(apiErr)
 		}
 		_, err := orgSvc.Create(rdbmsUrl, defaultTenantId, &org)
 		if err != nil {
-			if err.Error() == commons.OrgAlreadyExistsByCode {
+			if err.Error() == dtos.OrgAlreadyExistsByCode {
 				_ = ctx.SendStatus(fiber.StatusConflict)
-				apiErr := contracts.ConvertToFunctionalError(err, fiber.StatusConflict)
+				apiErr := exceptions.ConvertToFunctionalError(err, fiber.StatusConflict)
 				return ctx.JSON(apiErr)
 			} else {
 				_ = ctx.SendStatus(fiber.StatusInternalServerError)
-				apiErr := contracts.ConvertToInternalError(err)
+				apiErr := exceptions.ConvertToInternalError(err)
 				return ctx.JSON(apiErr)
 			}
 		} else {
@@ -74,14 +73,14 @@ func MakeOrgUpdateEndpoint(defaultTenantId int64, orgSvc api.OrganizationService
 		}{}
 		if err := ctx.BodyParser(&payload); err != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(err)
+			apiErr := exceptions.ConvertToInternalError(err)
 			return ctx.JSON(apiErr)
 		}
 		errUpdate := orgSvc.Update(defaultTenantId, orgCode, payload.Label)
 
 		if errUpdate != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errUpdate)
+			apiErr := exceptions.ConvertToInternalError(errUpdate)
 			return ctx.JSON(apiErr)
 		} else {
 			_ = ctx.SendStatus(fiber.StatusNoContent)
@@ -96,20 +95,20 @@ func MakeOrgDeleteEndpoint(defaultTenantId int64, orgSvc api.OrganizationService
 		orgCode := ctx.Params("orgCode")
 		_, errFind := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFind != nil {
-			if errFind.Error() == commons.OrgDoesNotExistByCode {
+			if errFind.Error() == dtos.OrgDoesNotExistByCode {
 				_ = ctx.SendStatus(fiber.StatusNotFound)
-				apiErr := contracts.ConvertToFunctionalError(errFind, fiber.StatusNotFound)
+				apiErr := exceptions.ConvertToFunctionalError(errFind, fiber.StatusNotFound)
 				return ctx.JSON(apiErr)
 			} else {
 				_ = ctx.SendStatus(fiber.StatusInternalServerError)
-				apiErr := contracts.ConvertToInternalError(errFind)
+				apiErr := exceptions.ConvertToInternalError(errFind)
 				return ctx.JSON(apiErr)
 			}
 		} else {
 			errUpdate := orgSvc.Delete(defaultTenantId, orgCode)
 			if errUpdate != nil {
 				_ = ctx.SendStatus(fiber.StatusInternalServerError)
-				apiErr := contracts.ConvertToInternalError(errUpdate)
+				apiErr := exceptions.ConvertToInternalError(errUpdate)
 				return ctx.JSON(apiErr)
 			} else {
 				_ = ctx.SendStatus(fiber.StatusNoContent)
@@ -124,13 +123,13 @@ func MakeOrgFindByCodeEndpoint(defaultTenantId int64, orgSvc api.OrganizationSer
 		orgCode := ctx.Params("orgCode")
 		org, errFind := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFind != nil {
-			if errFind.Error() == commons.OrgDoesNotExistByCode {
+			if errFind.Error() == dtos.OrgDoesNotExistByCode {
 				_ = ctx.SendStatus(fiber.StatusNotFound)
-				apiErr := contracts.ConvertToFunctionalError(errFind, fiber.StatusNotFound)
+				apiErr := exceptions.ConvertToFunctionalError(errFind, fiber.StatusNotFound)
 				return ctx.JSON(apiErr)
 			} else {
 				_ = ctx.SendStatus(fiber.StatusInternalServerError)
-				apiErr := contracts.ConvertToInternalError(errFind)
+				apiErr := exceptions.ConvertToInternalError(errFind)
 				return ctx.JSON(apiErr)
 			}
 		} else {
@@ -147,7 +146,7 @@ func MakeOrgFindAll(defaultTenantId int64, orgSvc api.OrganizationServiceInterfa
 		orgsList, errFindAll := orgSvc.FindAll(defaultTenantId)
 		if errFindAll != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := contracts.ConvertToInternalError(errFindAll)
+			apiErr := exceptions.ConvertToInternalError(errFindAll)
 			return ctx.JSON(apiErr)
 		} else {
 			orgResponseList := make([]orgs.OrganizationResponse, len(orgsList), len(orgsList))
