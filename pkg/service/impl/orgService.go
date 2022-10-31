@@ -3,6 +3,7 @@ package impl
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"micro-fiber-test/pkg/dto/commons"
@@ -30,7 +31,10 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 		return -1, errConnect
 	}
 	defer func(conn *pgx.Conn, ctx context.Context) {
-		_ = conn.Close(ctx)
+		errClose := conn.Close(ctx)
+		if errClose != nil {
+			fmt.Errorf("error closing connection [%w]", errClose)
+		}
 	}(conn, context.Background())
 
 	tx, errTx := conn.BeginTx(context.Background(), pgx.TxOptions{AccessMode: pgx.ReadWrite, IsoLevel: pgx.RepeatableRead})
