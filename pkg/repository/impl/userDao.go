@@ -30,10 +30,7 @@ func (u UserDao) Create(user model.UserInterface) (int64, error) {
 func (u UserDao) Update(user model.UserInterface) error {
 	updateStmt := "update users set last_name=$1,first_name=$2,middle_name=$3,login=$4,email=$5 where external_id=$6"
 	_, errQuery := u.dbPool.Exec(context.Background(), updateStmt, user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetExternalId())
-	if errQuery != nil {
-		return errQuery
-	}
-	return nil
+	return errQuery
 }
 
 func (u UserDao) CountByCriteria(criteria model.UserFilterCriteria) (int, error) {
@@ -187,10 +184,7 @@ func (u UserDao) Delete(userExtId string) error {
 	selStmt := "delete from users where external_id=$1"
 	rows, errQuery := u.dbPool.Query(context.Background(), selStmt, userExtId)
 	defer rows.Close()
-	if errQuery != nil {
-		return errQuery
-	}
-	return nil
+	return errQuery
 }
 
 func computeFindByCriteriaQuery(qryPrefix string, criteria model.UserFilterCriteria) (string string, params []interface{}) {

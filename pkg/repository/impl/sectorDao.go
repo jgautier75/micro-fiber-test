@@ -36,10 +36,7 @@ func (s SectorDao) Create(sector model.SectorInterface) (int64, error) {
 func (s SectorDao) DeleteByOrgId(orgId int64) error {
 	deleteStmt := "delete from sectors where org_id=$1"
 	_, errDelete := s.dbPool.Exec(context.Background(), deleteStmt, orgId)
-	if errDelete != nil {
-		return errDelete
-	}
-	return nil
+	return errDelete
 }
 
 func (s SectorDao) FindSectorsByTenantOrg(tenantId int64, orgId int64) ([]model.SectorInterface, error) {
@@ -163,8 +160,5 @@ func (s SectorDao) DeleteSector(defaultTenantId int64, sectorId int64) error {
 func (s SectorDao) Update(defaultTenantId int64, id int64, label string) error {
 	updateStmt := "update sectors set label=$1 where id=$2 and tenant_id=$3"
 	_, errQuery := s.dbPool.Exec(context.Background(), updateStmt, label, id, defaultTenantId)
-	if errQuery != nil {
-		return errQuery
-	}
-	return nil
+	return errQuery
 }
