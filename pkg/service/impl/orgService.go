@@ -45,12 +45,12 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 		if errTx != nil {
 			errRbk := tx.Rollback(context.Background())
 			if errRbk != nil {
-				return
+				fmt.Errorf("error rolling back connection [%w]", errRbk)
 			}
 		} else {
 			errCmt := tx.Commit(context.Background())
 			if errCmt != nil {
-				return
+				fmt.Errorf("error commiting connection [%w]", errCmt)
 			}
 		}
 	}()
