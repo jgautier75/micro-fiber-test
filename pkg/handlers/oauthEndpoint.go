@@ -90,6 +90,12 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 			apiError := exceptions.ConvertToInternalError(errDecode)
 			return ctx.JSON(apiError)
 		}
+		httpSession.Set("tkn", t.AccessToken)
+		errSessionSave := httpSession.Save()
+		if errSessionSave != nil {
+			fmt.Printf("error session save [%s]", errSessionSave.Error())
+			return errSessionSave
+		}
 		return ctx.Redirect("/welcome.html?access_token=" + t.AccessToken)
 	}
 }
