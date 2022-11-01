@@ -81,10 +81,10 @@ func MakeSectorCreateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		}
 
 		// Validate payload
-		validErr := validation.Validate(sectorReq)
-		if validErr != nil && len(validErr) > 0 {
+		errValid := validate.Struct(sectorReq)
+		if errValid != nil {
 			_ = ctx.SendStatus(fiber.StatusBadRequest)
-			apiError := exceptions.ConvertValidationError(validErr)
+			apiError := exceptions.ConvertValidationError(validation.ConvertValidationErrors(errValid))
 			return ctx.JSON(apiError)
 		}
 

@@ -42,10 +42,10 @@ func MakeUserCreateEndpoint(defaultTenantId int64, userSvc api.UserServiceInterf
 		}
 
 		// Validate payload
-		validErr := validation.Validate(userReq)
-		if validErr != nil && len(validErr) > 0 {
+		errValid := validate.Struct(userReq)
+		if errValid != nil {
 			_ = ctx.SendStatus(fiber.StatusBadRequest)
-			apiError := exceptions.ConvertValidationError(validErr)
+			apiError := exceptions.ConvertValidationError(validation.ConvertValidationErrors(errValid))
 			return ctx.JSON(apiError)
 		}
 
@@ -233,10 +233,10 @@ func MakeUserUpdate(defaultTenantId int64, userSvc api.UserServiceInterface, org
 		}
 
 		// Validate payload
-		validErr := validation.Validate(userReq)
-		if validErr != nil && len(validErr) > 0 {
+		errValid := validate.Struct(userReq)
+		if errValid != nil {
 			_ = ctx.SendStatus(fiber.StatusBadRequest)
-			apiError := exceptions.ConvertValidationError(validErr)
+			apiError := exceptions.ConvertValidationError(validation.ConvertValidationErrors(errValid))
 			return ctx.JSON(apiError)
 		}
 

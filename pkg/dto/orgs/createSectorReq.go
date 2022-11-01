@@ -3,7 +3,7 @@ package orgs
 import "micro-fiber-test/pkg/model"
 
 type CreateSectorReq struct {
-	Label      *string `json:"label" validate:"notblank,maxLength(50)"`
+	Label      *string `json:"label" validate:"required,max=50"`
 	ParentCode string  `json:"parentCode"`
 	Status     int     `json:"status"`
 }

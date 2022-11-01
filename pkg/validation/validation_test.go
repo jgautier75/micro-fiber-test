@@ -2,23 +2,34 @@ package validation
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
+	"github.com/go-playground/validator"
 	"testing"
 )
 
-type OrgTest struct {
-	Code   string  `json:"code" validate:"notblank,maxLength(50)"`
-	Label  *string `json:"label" validate:"notblank,maxLength(50)"`
-	Kind   string  `json:"type" validate:"notblank"`
-	Status int     `json:"status"`
+type OrgPlay struct {
+	Code string `validate:"required,min=3,max=32"`
 }
 
 func TestValidation(t *testing.T) {
-	orgTest := OrgTest{
-		Code: "code_test",
-		Kind: "community",
+	orgPlay := OrgPlay{
+		Code: "12",
 	}
-	errors := Validate(orgTest)
-	assert.Truef(t, len(errors) == 1, "One error")
-	assert.Truef(t, errors[0].Error.Error() == ValidErrorNotBlank && errors[0].Field == "Label", fmt.Sprintf("Constraint [%s] for field [%s]", ValidErrorNotBlank, "label"))
+
+	var validate = validator.New()
+	err := validate.Struct(orgPlay)
+	var errors []*ErrorResponse
+	if err != nil {
+		for _, err := range err.(validator.ValidationErrors) {
+			var element ErrorResponse
+			element.FailedField = err.StructNamespace()
+			element.Tag = err.Tag()
+			element.Value = err.Param()
+			errors = append(errors, &element)
+		}
+	}
+
+	for _, e := range errors {
+		fmt.Printf("Field: [%s], Tag: [%s], Value: [%s]", e.FailedField, e.Tag, e.Value)
+	}
+
 }
