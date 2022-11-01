@@ -2,6 +2,7 @@ package endpoints
 
 import (
 	"fmt"
+	"github.com/go-playground/validator"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	jsoniter "github.com/json-iterator/go"
@@ -14,6 +15,8 @@ import (
 	"micro-fiber-test/pkg/validation"
 )
 
+var validate = validator.New()
+
 func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		orgReq := orgs.CreateOrgRequest{}
@@ -24,10 +27,10 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 			return ctx.JSON(apiErr)
 		}
 
-		validErr := validation.Validate(orgReq)
-		if validErr != nil && len(validErr) > 0 {
+		errValid := validate.Struct(orgReq)
+		if errValid != nil {
 			_ = ctx.SendStatus(fiber.StatusBadRequest)
-			apiError := exceptions.ConvertValidationError(validErr)
+			apiError := exceptions.ConvertValidationError(validation.ConvertValidationErrors(errValid))
 			return ctx.JSON(apiError)
 		}
 
