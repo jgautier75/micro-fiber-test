@@ -53,8 +53,8 @@ func main() {
 	fmt.Printf("Redis port error [%v]", errRedis)
 
 	// Setup loggers
-	accessLogger := configureLogger(accessLogFile, false)
-	stdLogger := configureLogger(stdLogFile, true)
+	accessLogger := configureLogger(accessLogFile, false, false)
+	stdLogger := configureLogger(stdLogFile, true, true)
 
 	dbPool, poolErr := configureCnxPool(k, stdLogger)
 	if poolErr != nil {
@@ -160,7 +160,7 @@ func main() {
 }
 
 // Configure metrics logger
-func configureLogger(logCfg string, consoleOutput bool) *zap.Logger {
+func configureLogger(logCfg string, consoleOutput bool, callerAndStack bool) *zap.Logger {
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString(t.UTC().Format("2006-01-02T15:04:05Z0700"))
@@ -180,8 +180,11 @@ func configureLogger(logCfg string, consoleOutput bool) *zap.Logger {
 			zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
 		)
 	}
-	zapLogger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
-	return zapLogger
+	if callerAndStack {
+		return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
+	} else {
+		return zap.New(core)
+	}
 }
 
 // Configure rdbms connection pool
