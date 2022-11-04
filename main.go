@@ -119,7 +119,8 @@ func main() {
 
 	stdLogger.Info("Application -> Setup")
 	app := fiber.New(fConfig)
-	app.Use(logging.New(accessLogger))
+	app.Use(logging.NewAccessLogger(accessLogger))
+	app.Use(logging.NewHttpFilterLogger(stdLogger))
 
 	app.Static("/", "./static")
 
