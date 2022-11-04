@@ -1,0 +1,7 @@
+title="SQL Queries"
+[organizations]
+create="insert into organizations(tenant_id,code,label,type,status) values($1,$2,$3,$4,$5) returning id"
+[users]
+create="insert into users(tenant_id,org_id,external_id,last_name,first_name,middle_name,login,email,status) values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id"
+[sectors]
+create="insert into sectors(tenant_id,org_id,code,label,parent_id,has_parent,depth,status) values($1,$2,$3,$4,$5,$6,$7,$8) returning id"
