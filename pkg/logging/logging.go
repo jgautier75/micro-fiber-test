@@ -47,7 +47,7 @@ func New(zapLogger *zap.Logger) fiber.Handler {
 
 		var logReq = !strings.Contains(c.Path(), "assets") && !strings.Contains(c.Path(), ".html")
 		if logReq {
-			zapLogger.Debug("HTTP",
+			zapLogger.Info("HTTP",
 				zap.Field{Key: "method", Type: zapcore.StringType, String: c.Method()},
 				zap.Field{Key: "path", Type: zapcore.StringType, String: c.Path()},
 				zap.Field{Key: "ellapsed", Type: zapcore.Int64Type, Integer: duration.Milliseconds()},
