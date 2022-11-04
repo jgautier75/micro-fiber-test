@@ -9,6 +9,7 @@ import (
 	"github.com/gofiber/storage/redis"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knadh/koanf"
+	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
 	"go.uber.org/zap"
@@ -29,26 +30,32 @@ import (
 func main() {
 
 	// Load config file
-	var k = koanf.New(".")
-	errLoadCfg := k.Load(file.Provider("config/config.yaml"), yaml.Parser())
+	var kConfig = koanf.New(".")
+	errLoadCfg := kConfig.Load(file.Provider("config/config.yaml"), yaml.Parser())
 	if errLoadCfg != nil {
 		panic(errLoadCfg)
 	}
-	targetPort := k.String("http.server.port")
-	defaultTenantId := k.Int64("app.tenant")
-	accessLogFile := k.String("app.accessLogFile")
-	stdLogFile := k.String("app.stdLogFile")
-	clientId := k.String("app.oauthClientId")
-	clientSecret := k.String("app.oauthClientSecret")
-	oauthCallback := k.String("app.oauthCallback")
-	oauthRedirectUri := k.String("app.oauthRedirectUri")
-	oauthGitlab := k.String("app.oauthGitlab")
-	dbUrl := k.String("app.pgUrl")
-	redisHost := k.String("app.redisHost")
-	redisStrPort := k.String("app.redisPort")
+	targetPort := kConfig.String("http.server.port")
+	defaultTenantId := kConfig.Int64("app.tenant")
+	accessLogFile := kConfig.String("app.accessLogFile")
+	stdLogFile := kConfig.String("app.stdLogFile")
+	clientId := kConfig.String("app.oauthClientId")
+	clientSecret := kConfig.String("app.oauthClientSecret")
+	oauthCallback := kConfig.String("app.oauthCallback")
+	oauthRedirectUri := kConfig.String("app.oauthRedirectUri")
+	oauthGitlab := kConfig.String("app.oauthGitlab")
+	dbUrl := kConfig.String("app.pgUrl")
+	redisHost := kConfig.String("app.redisHost")
+	redisStrPort := kConfig.String("app.redisPort")
 	redisPort, errRedis := strconv.Atoi(redisStrPort)
-	redisUser := k.String("app.redisUser")
-	redisPass := k.String("app.redisPass")
+	redisUser := kConfig.String("app.redisUser")
+	redisPass := kConfig.String("app.redisPass")
+
+	var kSql = koanf.New(".")
+	errLoadSql := kSql.Load(file.Provider("config/sql_queries.toml"), toml.Parser())
+	if errLoadSql != nil {
+		panic(errLoadSql)
+	}
 
 	fmt.Printf("Redis port error [%v]", errRedis)
 
@@ -56,15 +63,15 @@ func main() {
 	accessLogger := configureLogger(accessLogFile, false, false)
 	stdLogger := configureLogger(stdLogFile, true, true)
 
-	dbPool, poolErr := configureCnxPool(k, stdLogger)
+	dbPool, poolErr := configureCnxPool(kConfig, stdLogger)
 	if poolErr != nil {
 		panic(poolErr)
 	}
 
 	stdLogger.Info("Dao & Services -> Setup & inject")
-	orgDao := impl.NewOrgDao(dbPool)
-	sectorDao := impl.NewSectorDao(dbPool)
-	userDao := impl.NewUserDao(dbPool)
+	orgDao := impl.NewOrgDao(dbPool, kSql)
+	sectorDao := impl.NewSectorDao(dbPool, kSql)
+	userDao := impl.NewUserDao(dbPool, kSql)
 	orgSvc := svcImpl.NewOrgService(dbPool, orgDao, sectorDao)
 	sectorSvc := svcImpl.NewSectorService(sectorDao)
 	userSvc := svcImpl.NewUserService(userDao)

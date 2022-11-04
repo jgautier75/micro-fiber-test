@@ -5,23 +5,26 @@ import (
 	"database/sql"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/knadh/koanf"
 	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/repository/api"
 )
 
 type SectorDao struct {
 	dbPool *pgxpool.Pool
+	koanf  *koanf.Koanf
 }
 
-func NewSectorDao(pool *pgxpool.Pool) api.SectorDaoInterface {
+func NewSectorDao(pool *pgxpool.Pool, kSql *koanf.Koanf) api.SectorDaoInterface {
 	sectorDao := SectorDao{}
 	sectorDao.dbPool = pool
+	sectorDao.koanf = kSql
 	return &sectorDao
 }
 
 func (s SectorDao) CreateInTx(tx pgx.Tx, sector model.SectorInterface) (int64, error) {
 	var id int64
-	insertStmt := "insert into sectors(tenant_id,org_id,code,label,parent_id,has_parent,depth,status) values($1,$2,$3,$4,$5,$6,$7,$8) returning id"
+	insertStmt := s.koanf.String("sectors.create")
 	errQuery := tx.QueryRow(context.Background(), insertStmt, sector.GetTenantId(), sector.GetOrgId(), sector.GetCode(), sector.GetLabel(), sector.GetParentId(), sector.GetHasParent(), sector.GetDepth(), sector.GetSectorStatus()).Scan(&id)
 	return id, errQuery
 }

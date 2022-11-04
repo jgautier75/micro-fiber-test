@@ -4,30 +4,33 @@ import (
 	"context"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/knadh/koanf"
 	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/repository/api"
 )
 
 type OrgDao struct {
 	dbPool *pgxpool.Pool
+	koanf  *koanf.Koanf
 }
 
-func NewOrgDao(pool *pgxpool.Pool) api.OrgDaoInterface {
+func NewOrgDao(pool *pgxpool.Pool, kSql *koanf.Koanf) api.OrgDaoInterface {
 	orgDao := OrgDao{}
 	orgDao.dbPool = pool
+	orgDao.koanf = kSql
 	return &orgDao
 }
 
 func (orgRepo *OrgDao) CreateInTx(tx pgx.Tx, org model.OrganizationInterface) (int64, error) {
 	var id int64
-	insertStmt := "insert into organizations(tenant_id,code,label,type,status) values($1,$2,$3,$4,$5) returning id"
+	insertStmt := orgRepo.koanf.String("organizations.create")
 	errQuery := tx.QueryRow(context.Background(), insertStmt, org.GetTenantId(), org.GetCode(), org.GetLabel(), org.GetType(), org.GetStatus()).Scan(&id)
 	return id, errQuery
 }
 
 func (orgRepo *OrgDao) Create(org model.OrganizationInterface) (int64, error) {
 	var id int64
-	insertStmt := "insert into organizations(tenant_id,code,label,type,status) values($1,$2,$3,$4,$5) returning id"
+	insertStmt := orgRepo.koanf.String("organizations.create")
 	errQuery := orgRepo.dbPool.QueryRow(context.Background(), insertStmt, org.GetTenantId(), org.GetCode(), org.GetLabel(), org.GetType(), org.GetStatus()).Scan(&id)
 	return id, errQuery
 }

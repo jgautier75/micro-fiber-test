@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/knadh/koanf"
 	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/repository/api"
 	"strconv"
@@ -23,17 +24,19 @@ const (
 
 type UserDao struct {
 	dbPool *pgxpool.Pool
+	koanf  *koanf.Koanf
 }
 
-func NewUserDao(pool *pgxpool.Pool) api.UserDaoInterface {
+func NewUserDao(pool *pgxpool.Pool, kSql *koanf.Koanf) api.UserDaoInterface {
 	userDao := UserDao{}
 	userDao.dbPool = pool
+	userDao.koanf = kSql
 	return &userDao
 }
 
 func (u UserDao) Create(user model.UserInterface) (int64, error) {
 	var id int64
-	insertStmt := "insert into users(tenant_id,org_id,external_id,last_name,first_name,middle_name,login,email,status) values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id"
+	insertStmt := u.koanf.String("users.create")
 	errQuery := u.dbPool.QueryRow(context.Background(), insertStmt, user.GetTenantId(), user.GetOrgId(), user.GetExternalId(), user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetStatus()).Scan(&id)
 	return id, errQuery
 }
