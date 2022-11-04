@@ -2,15 +2,18 @@ package exceptions
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/pkg/errors"
 	"micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/validation"
 )
 
 func ConvertToInternalError(err error) commons.ApiError {
+	errStack := errors.WithStack(err)
 	return commons.ApiError{
-		Code:    fiber.StatusInternalServerError,
-		Kind:    string(commons.ErrorTypeTechnical),
-		Message: err.Error(),
+		Code:         fiber.StatusInternalServerError,
+		Kind:         string(commons.ErrorTypeTechnical),
+		Message:      err.Error(),
+		DebugMessage: errStack.Error(),
 	}
 }
 
