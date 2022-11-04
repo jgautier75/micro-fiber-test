@@ -1,7 +1,14 @@
-version: '2'
-
+version: '3.7'
 services:
-  redis:
+  go-poc-postgresql:
+    image: postgres
+    environment:
+      - POSTGRES_DB=rainbow_database
+      - POSTGRES_USER=posgres
+      - POSTGRES_PASSWORD=4y7sV96vA9wv46VR
+    ports:
+      - 5432:5432
+  go-poc-redis:
     image: docker.io/bitnami/redis:7.0
     environment:
       # ALLOW_EMPTY_PASSWORD is recommended only for development.
@@ -9,9 +16,3 @@ services:
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
     ports:
       - '6379:6379'
-    volumes:
-      - 'redis_data:/bitnami/redis/data'
-
-volumes:
-  redis_data:
-    driver: local
