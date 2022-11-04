@@ -6,7 +6,8 @@ app:
   pgUrl: postgres://posgres:4y7sV96vA9wv46VR@localhost:5432/rainbow_database
   pgPoolMin: 5
   pgPoolMax: 5
-  logFile: ./access.log
+  accessLogFile: ./access.log
+  stdLogFile: ./micro-fiber-test.log
   oauthClientId: fe776acfe3df20bae9eb
   oauthClientSecret: 18733805950f7b29477ed4dde4e188f6df18e4b0
   oauthGitlab: https://github.com/login/oauth/authorize
