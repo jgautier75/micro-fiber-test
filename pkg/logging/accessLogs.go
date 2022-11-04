@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-func New(zapLogger *zap.Logger) fiber.Handler {
+func NewAccessLogger(zapLogger *zap.Logger) fiber.Handler {
 
 	var (
 		once       sync.Once
