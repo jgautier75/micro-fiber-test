@@ -21,10 +21,11 @@ const (
 )
 
 type ApiError struct {
-	Code    int               `json:"code"`
-	Kind    string            `json:"kind"`
-	Message string            `json:"message"`
-	Details []ApiErrorDetails `json:"details,omitempty"`
+	Code         int               `json:"code"`
+	Kind         string            `json:"kind"`
+	Message      string            `json:"message"`
+	DebugMessage string            `json:"debugMessage"`
+	Details      []ApiErrorDetails `json:"details,omitempty"`
 }
 
 type ApiErrorDetails struct {
