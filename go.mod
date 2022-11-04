@@ -12,6 +12,7 @@ require (
 	github.com/jackc/pgx/v5 v5.0.4
 	github.com/json-iterator/go v1.1.12
 	github.com/knadh/koanf v1.4.4
+	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.8.0
 	github.com/testcontainers/testcontainers-go v0.13.0
 	go.uber.org/zap v1.23.0
@@ -67,7 +68,6 @@ require (
 	github.com/opencontainers/image-spec v1.0.2 // indirect
 	github.com/opencontainers/runc v1.1.0 // indirect
 	github.com/pelletier/go-toml v1.9.3 // indirect
-	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/rivo/uniseg v0.4.2 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
