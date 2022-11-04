@@ -36,7 +36,8 @@ func main() {
 	}
 	targetPort := k.String("http.server.port")
 	defaultTenantId := k.Int64("app.tenant")
-	logCfg := k.String("app.logFile")
+	accessLogFile := k.String("app.accessLogFile")
+	stdLogFile := k.String("app.stdLogFile")
 	clientId := k.String("app.oauthClientId")
 	clientSecret := k.String("app.oauthClientSecret")
 	oauthCallback := k.String("app.oauthCallback")
@@ -51,14 +52,16 @@ func main() {
 
 	fmt.Printf("Redis port error [%v]", errRedis)
 
-	zapLogger := configureLogger(logCfg)
+	// Setup loggers
+	accessLogger := configureLogger(accessLogFile, false)
+	stdLogger := configureLogger(stdLogFile, true)
 
-	dbPool, poolErr := configureCnxPool(k, zapLogger)
+	dbPool, poolErr := configureCnxPool(k, stdLogger)
 	if poolErr != nil {
 		panic(poolErr)
 	}
 
-	zapLogger.Info("Dao & Services -> Setup & inject")
+	stdLogger.Info("Dao & Services -> Setup & inject")
 	orgDao := impl.NewOrgDao(dbPool)
 	sectorDao := impl.NewSectorDao(dbPool)
 	userDao := impl.NewUserDao(dbPool)
@@ -95,11 +98,10 @@ func main() {
 	},
 	)
 
+	// Session storage in redis
 	defCfg := session.ConfigDefault
 	defCfg.Storage = redisStorage
-
 	store := session.New(defCfg)
-
 	fConfig := fiber.Config{
 		CaseSensitive:     true,
 		StrictRouting:     true,
@@ -108,9 +110,9 @@ func main() {
 		ErrorHandler:      defErrorHandler,
 	}
 
-	zapLogger.Info("Application -> Setup")
+	stdLogger.Info("Application -> Setup")
 	app := fiber.New(fConfig)
-	app.Use(logging.New(zapLogger))
+	app.Use(logging.New(accessLogger))
 
 	app.Static("/", "./static")
 
@@ -139,7 +141,7 @@ func main() {
 	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, oauthCallback, clientId, clientSecret))
 
 	go func() {
-		zapLogger.Info("Application -> ListenTLS")
+		stdLogger.Info("Application -> ListenTLS")
 		if errTls := app.ListenTLS(":"+targetPort, "cert.pem", "key.pem"); errTls != nil {
 			panic(errTls)
 		}
@@ -152,13 +154,13 @@ func main() {
 	fmt.Println("Gracefully shutting down...")
 	_ = app.Shutdown()
 
-	zapLogger.Info("Closing connections pool")
+	stdLogger.Info("Closing connections pool")
 	dbPool.Close()
 
 }
 
-// Configure logger
-func configureLogger(logCfg string) *zap.Logger {
+// Configure metrics logger
+func configureLogger(logCfg string, consoleOutput bool) *zap.Logger {
 	config := zap.NewProductionEncoderConfig()
 	config.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString(t.UTC().Format("2006-01-02T15:04:05Z0700"))
@@ -167,11 +169,17 @@ func configureLogger(logCfg string) *zap.Logger {
 	consoleEncoder := zapcore.NewConsoleEncoder(config)
 	logFile, _ := os.OpenFile(logCfg, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	writer := zapcore.AddSync(logFile)
-	defaultLogLevel := zapcore.DebugLevel
-	core := zapcore.NewTee(
-		zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
-		zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), defaultLogLevel),
-	)
+	defaultLogLevel := zapcore.InfoLevel
+	var core zapcore.Core
+	if consoleOutput {
+		core = zapcore.NewTee(
+			zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
+			zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), defaultLogLevel))
+	} else {
+		core = zapcore.NewTee(
+			zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
+		)
+	}
 	zapLogger := zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
 	return zapLogger
 }
