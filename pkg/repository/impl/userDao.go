@@ -10,6 +10,17 @@ import (
 	"strings"
 )
 
+const (
+	LogicalOperatorAnd = "and"
+	LogicalOperatorOr  = "or"
+	WhereExprEq        = "%s=%s"
+	WhereExprNotEq     = "%s!=%s"
+	WhereExprIn        = "%s in(%s)"
+	WhereExprNotIn     = "%s not in(%s)"
+	WhereExprLike      = "%s like %s"
+	WhereExprNotLike   = "%s not like %s"
+)
+
 type UserDao struct {
 	dbPool *pgxpool.Pool
 }
@@ -35,7 +46,7 @@ func (u UserDao) Update(user model.UserInterface) error {
 
 func (u UserDao) CountByCriteria(criteria model.UserFilterCriteria) (int, error) {
 	var fullQry strings.Builder
-	qryPrefix := "select count(1) from users where tenant_id=$1 and org_id=$2"
+	qryPrefix := "select count(1) from users"
 	whereClause, vals := computeFindByCriteriaQuery(qryPrefix, criteria)
 	fullQry.WriteString(whereClause)
 	countRes, errCount := u.dbPool.Query(context.Background(), fullQry.String(), vals...)
@@ -55,7 +66,7 @@ func (u UserDao) CountByCriteria(criteria model.UserFilterCriteria) (int, error)
 func (u UserDao) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSearchResult, error) {
 	searchResults := model.UserSearchResult{}
 	var fullQry strings.Builder
-	qryPrefix := "select id,external_id,last_name,first_name,middle_name,login,email,status from users where tenant_id=$1 and org_id=$2"
+	qryPrefix := "select id,external_id,last_name,first_name,middle_name,login,email,status from users"
 	whereClause, vals := computeFindByCriteriaQuery(qryPrefix, criteria)
 	fullQry.WriteString(whereClause)
 	fullQry.WriteString(" order by  last_name,first_name asc")
@@ -191,32 +202,63 @@ func computeFindByCriteriaQuery(qryPrefix string, criteria model.UserFilterCrite
 
 	var values []interface{}
 	var buf strings.Builder
-
-	values = append(values, criteria.TenantId)
-	values = append(values, criteria.OrgId)
+	inc := 1
 
 	buf.WriteString(qryPrefix)
+	buf.WriteString(" where ")
 
-	inc := 3
+	values = append(values, criteria.TenantId)
+	inc, whereTenant := addCriteria(WhereExprEq, "tenant_id", inc, LogicalOperatorAnd)
+	buf.WriteString(whereTenant)
+
+	values = append(values, criteria.OrgId)
+	inc, whereOrg := addCriteria(WhereExprEq, "org_id", inc, LogicalOperatorAnd)
+	buf.WriteString(whereOrg)
+
 	if criteria.Login != "" {
-		values = append(values, criteria.Login)
-		buf.WriteString(fmt.Sprintf(" and login=%s", "%"+strconv.Itoa(inc)))
-		inc = inc + 1
+		values = append(values, "%"+criteria.Login+"%")
+		nextInc, whereLogin := addCriteria(WhereExprLike, "login", inc, LogicalOperatorAnd)
+		inc = nextInc
+		buf.WriteString(whereLogin)
 	}
 	if criteria.Email != "" {
-		values = append(values, criteria.Email)
-		buf.WriteString(fmt.Sprintf(" and email=%s", "%"+strconv.Itoa(inc)))
-		inc = inc + 1
+		values = append(values, "%"+criteria.Email+"%")
+		nextInc, whereEmail := addCriteria(WhereExprLike, "email", inc, LogicalOperatorAnd)
+		inc = nextInc
+		buf.WriteString(whereEmail)
 	}
 	if criteria.LastName != "" {
-		values = append(values, criteria.LastName)
-		buf.WriteString(fmt.Sprintf(" and last_name=%s", "%"+strconv.Itoa(inc)))
+		values = append(values, "%"+criteria.LastName+"%")
+		nextInc, whereLastName := addCriteria(WhereExprLike, "last_name", inc, LogicalOperatorAnd)
+		inc = nextInc
 		inc = inc + 1
+		buf.WriteString(whereLastName)
 	}
 	if criteria.FirstName != "" {
-		values = append(values, criteria.FirstName)
-		buf.WriteString(fmt.Sprintf(" and first_name=%s", "%"+strconv.Itoa(inc)))
+		values = append(values, "%"+criteria.FirstName+"%")
+		nextInc, whereFirstName := addCriteria(WhereExprLike, "first_name", inc, LogicalOperatorAnd)
+		inc = nextInc
+		inc = inc + 1
+		buf.WriteString(whereFirstName)
 	}
 	fullQry := buf.String()
 	return fullQry, values
+}
+
+func addCriteria(expression string, criteriaName string, inc int, logicalOperator string) (nextInc int, qry string) {
+	var whereClause string
+	var next int
+	if inc == 0 {
+		inc = 1
+		next = 1
+	} else {
+		next = inc + 1
+	}
+	if inc > 1 {
+		whereClause = " " + logicalOperator + " "
+	} else {
+		whereClause = ""
+	}
+	whereClause = whereClause + fmt.Sprintf(expression, criteriaName, "$"+strconv.Itoa(inc))
+	return next, whereClause
 }
