@@ -36,19 +36,19 @@ func (orgRepo *OrgDao) Create(org model.OrganizationInterface) (int64, error) {
 }
 
 func (orgRepo *OrgDao) Update(orgCode string, label string) error {
-	updateStmt := "update organizations set label=$1 where code=$2"
+	updateStmt := orgRepo.koanf.String("organizations.update")
 	_, errQuery := orgRepo.dbPool.Exec(context.Background(), updateStmt, label, orgCode)
 	return errQuery
 }
 
 func (orgRepo *OrgDao) Delete(orgCode string) error {
-	deleteStmt := "delete from organizations where code=$1"
+	deleteStmt := orgRepo.koanf.String("organizations.update")
 	_, errQuery := orgRepo.dbPool.Exec(context.Background(), deleteStmt, orgCode)
 	return errQuery
 }
 
 func (orgRepo *OrgDao) FindByCode(code string) (model.OrganizationInterface, error) {
-	selStmt := "select id,tenant_id,code,label,type,status from organizations where code=$1"
+	selStmt := orgRepo.koanf.String("organizations.findbycode")
 	rows, e := orgRepo.dbPool.Query(context.Background(), selStmt, code)
 	if e != nil {
 		return nil, e
@@ -79,7 +79,7 @@ func (orgRepo *OrgDao) FindByCode(code string) (model.OrganizationInterface, err
 }
 
 func (orgRepo *OrgDao) FindAll(tenantId int64) ([]model.OrganizationInterface, error) {
-	selStmt := "select id,tenant_id,code,label,type,status from organizations where tenant_id=$1"
+	selStmt := orgRepo.koanf.String("organizations.findall")
 	rows, errQry := orgRepo.dbPool.Query(context.Background(), selStmt, tenantId)
 	if errQry != nil {
 		return nil, errQry
@@ -111,7 +111,7 @@ func (orgRepo *OrgDao) FindAll(tenantId int64) ([]model.OrganizationInterface, e
 }
 
 func (orgRepo *OrgDao) ExistsByCode(tenantId int64, code string) (bool, error) {
-	selStmt := "select count(1) from organizations where tenant_id=$1 and code=$2"
+	selStmt := orgRepo.koanf.String("organizations.existsbycode")
 	rows, e := orgRepo.dbPool.Query(context.Background(), selStmt, tenantId, code)
 	defer rows.Close()
 	if e != nil {
