@@ -84,12 +84,14 @@ func TestDao(t *testing.T) {
 	fmt.Printf("postgreSQL started on [%s]:[%s] \n", host, port)
 	pgUrl := fmt.Sprintf("postgres://postgres:postgres@%s:%d/testdb?sslmode=disable", host, port.Int())
 
+	fmt.Printf("pgURL [%s]0\n", pgUrl)
 	// Run migrations: create tables, sequences, ...
 	db, err := sql.Open("postgres", pgUrl)
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
 	m, err := migrate.NewWithDatabaseInstance(
 		"file://../../migrations",
 		"postgres", driver)
+	fmt.Printf("Migrate RDBMS\n")
 	errMig := m.Up()
 	if errMig != nil {
 		panic(errMig)
