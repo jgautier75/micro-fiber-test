@@ -1,6 +1,11 @@
 title="SQL Queries"
 [organizations]
 create="insert into organizations(tenant_id,code,label,type,status) values($1,$2,$3,$4,$5) returning id"
+update="update organizations set label=$1 where code=$2"
+delete="delete from organizations where code=$1"
+findbycode="select id,tenant_id,code,label,type,status from organizations where code=$1"
+findall="select id,tenant_id,code,label,type,status from organizations where tenant_id=$1"
+existsbycode="select count(1) from organizations where tenant_id=$1 and code=$2"
 [users]
 create="insert into users(tenant_id,org_id,external_id,last_name,first_name,middle_name,login,email,status) values($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id"
 [sectors]

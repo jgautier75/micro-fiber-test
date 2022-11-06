@@ -8,6 +8,9 @@ import (
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/knadh/koanf"
+	"github.com/knadh/koanf/parsers/toml"
+	"github.com/knadh/koanf/providers/file"
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
@@ -102,7 +105,12 @@ func TestDao(t *testing.T) {
 	}
 
 	// Test create organization
-	orgRepo := NewOrgDao(dbPool)
+	var kSql = koanf.New(".")
+	errLoadSql := kSql.Load(file.Provider("../../../config/sql_queries.toml"), toml.Parser())
+	if errLoadSql != nil {
+		fmt.Printf("Error loading config file [%s]", errLoadSql)
+	}
+	orgRepo := NewOrgDao(dbPool, kSql)
 	org := model.Organization{}
 	org.SetStatus(model.OrgStatusActive)
 	org.SetLabel("Test Org")
