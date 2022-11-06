@@ -234,14 +234,12 @@ func computeFindByCriteriaQuery(qryPrefix string, criteria model.UserFilterCrite
 		values = append(values, "%"+criteria.LastName+"%")
 		nextInc, whereLastName := addCriteria(WhereExprLike, "last_name", inc, LogicalOperatorAnd)
 		inc = nextInc
-		inc = inc + 1
 		buf.WriteString(whereLastName)
 	}
 	if criteria.FirstName != "" {
 		values = append(values, "%"+criteria.FirstName+"%")
 		nextInc, whereFirstName := addCriteria(WhereExprLike, "first_name", inc, LogicalOperatorAnd)
 		inc = nextInc
-		inc = inc + 1
 		buf.WriteString(whereFirstName)
 	}
 	fullQry := buf.String()
