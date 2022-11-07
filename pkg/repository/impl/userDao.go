@@ -42,7 +42,7 @@ func (u UserDao) Create(user model.UserInterface) (int64, error) {
 }
 
 func (u UserDao) Update(user model.UserInterface) error {
-	updateStmt := "update users set last_name=$1,first_name=$2,middle_name=$3,login=$4,email=$5 where external_id=$6"
+	updateStmt := u.koanf.String("users.update_by_external_id")
 	_, errQuery := u.dbPool.Exec(context.Background(), updateStmt, user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetExternalId())
 	return errQuery
 }
