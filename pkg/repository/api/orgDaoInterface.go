@@ -12,5 +12,6 @@ type OrgDaoInterface interface {
 	FindByCode(code string) (model.OrganizationInterface, error)
 	FindAll(tenantId int64) ([]model.OrganizationInterface, error)
 	ExistsByCode(tenantId int64, code string) (bool, error)
+	ExistsByLabel(tenantId int64, label string) (bool, error)
 	CreateInTx(tx pgx.Tx, organization model.OrganizationInterface) (int64, error)
 }

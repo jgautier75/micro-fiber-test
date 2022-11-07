@@ -26,6 +26,15 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 	if orgExists {
 		return 0, errors.New(commons.OrgAlreadyExistsByCode)
 	}
+
+	exists, errOrg := orgService.orgDao.ExistsByLabel(defaultTenant, organization.GetLabel())
+	if errOrg != nil {
+		return 0, errOrg
+	}
+	if exists {
+		return 0, errors.New(commons.OrgAlreadyExistsByLabel)
+	}
+
 	conn, errConnect := pgx.Connect(context.Background(), cnxParams)
 	if errConnect != nil {
 		return -1, errConnect
@@ -33,7 +42,8 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 	defer func(conn *pgx.Conn, ctx context.Context) {
 		errClose := conn.Close(ctx)
 		if errClose != nil {
-			fmt.Errorf("error closing connection [%w]", errClose)
+			fullErr := fmt.Errorf("error closing connection [%w]", errClose)
+			fmt.Printf("Commit error [%s]", fullErr)
 		}
 	}(conn, context.Background())
 
@@ -45,12 +55,14 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 		if errTx != nil {
 			errRbk := tx.Rollback(context.Background())
 			if errRbk != nil {
-				fmt.Errorf("error rolling back connection [%w]", errRbk)
+				fullErr := fmt.Errorf("error rolling back connection [%w]", errRbk)
+				fmt.Printf("Rollback error [%s]", fullErr)
 			}
 		} else {
 			errCmt := tx.Commit(context.Background())
 			if errCmt != nil {
-				fmt.Errorf("error commiting connection [%w]", errCmt)
+				fullErr := fmt.Errorf("error commiting connection [%w]", errCmt)
+				fmt.Printf("Commit error [%s]", fullErr)
 			}
 		}
 	}()
