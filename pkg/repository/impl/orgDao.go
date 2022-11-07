@@ -131,3 +131,24 @@ func (orgRepo *OrgDao) ExistsByCode(tenantId int64, code string) (bool, error) {
 	}
 	return exists, nil
 }
+
+func (orgRepo *OrgDao) ExistsByLabel(tenantId int64, label string) (bool, error) {
+	selStmt := orgRepo.koanf.String("organizations.findbylabel")
+	rows, errQry := orgRepo.dbPool.Query(context.Background(), selStmt, tenantId, label)
+	defer rows.Close()
+	if errQry != nil {
+		return false, errQry
+	}
+	cnt := 0
+	for rows.Next() {
+		err := rows.Scan(&cnt)
+		if err != nil {
+			return false, err
+		}
+	}
+	var exists = false
+	if cnt > 0 {
+		exists = true
+	}
+	return exists, nil
+}
