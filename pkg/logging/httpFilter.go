@@ -2,12 +2,15 @@ package logging
 
 import (
 	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"strings"
 	"sync"
 	"time"
 )
+
+const BsTxId = "bsTxId"
 
 func NewHttpFilterLogger(zapLogger *zap.Logger) fiber.Handler {
 
@@ -18,6 +21,9 @@ func NewHttpFilterLogger(zapLogger *zap.Logger) fiber.Handler {
 
 	return func(c *fiber.Ctx) (err error) {
 
+		var bsTxId string
+		bsTxId = uuid.New().String()
+		c.Locals(BsTxId, bsTxId)
 		defer func(zapLogger *zap.Logger) {
 			_ = zapLogger.Sync()
 		}(zapLogger)
@@ -64,6 +70,7 @@ func NewHttpFilterLogger(zapLogger *zap.Logger) fiber.Handler {
 				zap.Field{Key: "http.request.headers", Type: zapcore.StringType, String: strings.Join(reqHeaders, "&")},
 				zap.Field{Key: "http.request.body", Type: zapcore.StringType, String: string(c.Body())},
 				zap.Field{Key: "http.response.body", Type: zapcore.StringType, String: string(c.Response().Body())},
+				zap.Field{Key: "bsTransactionId", Type: zapcore.StringType, String: bsTxId},
 			)
 		}
 		return nil
