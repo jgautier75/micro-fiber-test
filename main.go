@@ -16,7 +16,7 @@ import (
 	"go.uber.org/zap/zapcore"
 	"micro-fiber-test/pkg/exceptions"
 	"micro-fiber-test/pkg/handlers"
-	"micro-fiber-test/pkg/logging"
+	"micro-fiber-test/pkg/middlewares"
 	"micro-fiber-test/pkg/repository/impl"
 	svcImpl "micro-fiber-test/pkg/service/impl"
 	"os"
@@ -119,8 +119,8 @@ func main() {
 
 	stdLogger.Info("Application -> Setup")
 	app := fiber.New(fConfig)
-	app.Use(logging.NewAccessLogger(accessLogger))
-	app.Use(logging.NewHttpFilterLogger(stdLogger))
+	app.Use(middlewares.NewAccessLogger(accessLogger))
+	app.Use(middlewares.NewHttpFilterLogger(stdLogger))
 
 	app.Static("/", "./static")
 

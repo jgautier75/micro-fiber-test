@@ -10,7 +10,7 @@ import (
 	dtos "micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/dto/orgs"
 	"micro-fiber-test/pkg/exceptions"
-	"micro-fiber-test/pkg/logging"
+	"micro-fiber-test/pkg/middlewares"
 	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
@@ -22,7 +22,7 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 	return func(ctx *fiber.Ctx) error {
 
 		var bsTxId interface{}
-		bsTxId = ctx.Locals(logging.BsTxId)
+		bsTxId = ctx.Locals(middlewares.BsTxId)
 		fmt.Printf("Bs Transaction id: [%s]", bsTxId)
 
 		orgReq := orgs.CreateOrgRequest{}
