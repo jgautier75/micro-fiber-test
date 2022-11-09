@@ -7,7 +7,9 @@ services:
       - POSTGRES_USER=posgres
       - POSTGRES_PASSWORD=4y7sV96vA9wv46VR
     ports:
-      - 5432:5432
+      - '5432:5432'
+    volumes:
+      - poc_pg_data:/var/lib/postgresql
   go-poc-redis:
     image: docker.io/bitnami/redis:7.0
     environment:
@@ -16,3 +18,5 @@ services:
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
     ports:
       - '6379:6379'
+volumes:
+  poc_pg_data:
