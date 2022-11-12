@@ -1,19 +1,20 @@
 package endpoints
 
 import (
+	"bytes"
 	"crypto/rand"
 	"crypto/sha256"
 	"encoding/base64"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-resty/resty"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"io"
 	"micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/exceptions"
 	"micro-fiber-test/pkg/model"
-	"net/http"
 	"net/url"
 	"strings"
 )
@@ -25,7 +26,7 @@ const (
 
 func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientId string, oauthClientSecret string) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
-		httpClient := http.Client{}
+
 		code := ctx.Query("code")
 		reqState := ctx.Query("state")
 
@@ -64,28 +65,21 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 		httpSession.Delete(oAuthState)
 		httpSession.Delete(cVerifier)
 
-		req, errOauth := http.NewRequest(http.MethodPost, reqURL, nil)
-		if errOauth != nil {
-			apiError := exceptions.ConvertToFunctionalError(errOauth, fiber.StatusConflict)
+		client := resty.New()
+		client.SetDebug(true)
+		client.SetCloseConnection(true)
+
+		resp, errOAuth := client.R().SetHeader(fiber.HeaderAccept, fiber.MIMEApplicationJSON).Post(reqURL)
+		if errOAuth != nil {
+			apiError := exceptions.ConvertToFunctionalError(errOAuth, fiber.StatusConflict)
 			_ = ctx.SendStatus(fiber.StatusConflict)
 			return ctx.JSON(apiError)
 		}
-		req.Header.Set(fiber.HeaderAccept, fiber.MIMEApplicationJSON)
 
-		res, errHttp := httpClient.Do(req)
-		if errHttp != nil {
-			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiError := exceptions.ConvertToInternalError(errHttp)
-			return ctx.JSON(apiError)
-		}
-		defer func(Body io.ReadCloser) {
-			err := Body.Close()
-			if err != nil {
-
-			}
-		}(res.Body)
+		respData := resp.Body()
+		reader := bytes.NewReader(respData)
 		var t model.OAuthAccessResponse
-		if errDecode := json.NewDecoder(res.Body).Decode(&t); errDecode != nil {
+		if errDecode := json.NewDecoder(reader).Decode(&t); errDecode != nil {
 			_ = ctx.SendStatus(fiber.StatusInternalServerError)
 			apiError := exceptions.ConvertToInternalError(errDecode)
 			return ctx.JSON(apiError)
