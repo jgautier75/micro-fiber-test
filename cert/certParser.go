@@ -12,7 +12,7 @@ import (
 
 func main() {
 
-	certPEMBlock, err := os.ReadFile("cert/lando-lacroix-datafactory.northeurope.cloudapp.azure.com")
+	certPEMBlock, err := os.ReadFile("cert.pem")
 	if err != nil {
 		fErr := fmt.Errorf("error reading file [%w]", err)
 		fmt.Println(fErr)
