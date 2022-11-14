@@ -6,9 +6,8 @@ require (
 	github.com/go-oauth2/oauth2 v3.9.2+incompatible
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-resty/resty v1.8.0
-	github.com/go-resty/resty/v2 v2.7.0
 	github.com/gofiber/fiber/v2 v2.39.0
-	github.com/gofiber/storage/redis v0.0.0-20221111080837-a1556f322a7b
+	github.com/gofiber/storage/redis v0.0.0-20221114103847-2bba6b2afd2b
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v5 v5.0.4
