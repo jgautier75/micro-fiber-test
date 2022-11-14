@@ -5,8 +5,10 @@ go 1.19
 require (
 	github.com/go-oauth2/oauth2 v3.9.2+incompatible
 	github.com/go-playground/validator v9.31.0+incompatible
+	github.com/go-resty/resty v1.8.0
+	github.com/go-resty/resty/v2 v2.7.0
 	github.com/gofiber/fiber/v2 v2.39.0
-	github.com/gofiber/storage/redis v0.0.0-20221104073629-b9f4a4fada7a
+	github.com/gofiber/storage/redis v0.0.0-20221111080837-a1556f322a7b
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v5 v5.0.4
@@ -46,7 +48,7 @@ require (
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20200714003250-2b9c44734f2b // indirect
-	github.com/jackc/puddle/v2 v2.1.0 // indirect
+	github.com/jackc/puddle/v2 v2.1.1 // indirect
 	github.com/klauspost/compress v1.15.12 // indirect
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lib/pq v1.10.7 // indirect
