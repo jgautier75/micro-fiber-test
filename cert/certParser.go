@@ -42,9 +42,9 @@ func main() {
 	fingerprint := sha256.Sum256(cert.Raw)
 	for i, f := range fingerprint {
 		if i > 0 {
-			fmt.Fprintf(&buf, ":")
+			_, _ = fmt.Fprintf(&buf, ":")
 		}
-		fmt.Fprintf(&buf, "%02X", f)
+		_, _ = fmt.Fprintf(&buf, "%02X", f)
 	}
 	fmt.Printf("Fingerprint %s\n", buf.String())
 }

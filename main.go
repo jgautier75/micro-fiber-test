@@ -44,6 +44,7 @@ func main() {
 	oauthCallback := kConfig.String("app.oauthCallback")
 	oauthRedirectUri := kConfig.String("app.oauthRedirectUri")
 	oauthGitlab := kConfig.String("app.oauthGitlab")
+	oauthDebug := kConfig.Bool("app.oauthDebug")
 	dbUrl := kConfig.String("app.pgUrl")
 	redisHost := kConfig.String("app.redisHost")
 	redisStrPort := kConfig.String("app.redisPort")
@@ -146,7 +147,7 @@ func main() {
 
 	// OAuth and authentication
 	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(store, oauthGitlab, clientId, oauthRedirectUri))
-	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, oauthCallback, clientId, clientSecret))
+	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, oauthCallback, clientId, clientSecret, oauthDebug))
 
 	go func() {
 		stdLogger.Info("Application -> ListenTLS")
