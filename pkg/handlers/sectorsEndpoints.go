@@ -20,9 +20,15 @@ func MakeSectorsFindByOrga(defaultTenantId int64, orgSvc api.OrganizationService
 		orgCode := ctx.Params("orgCode")
 		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
-			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := exceptions.ConvertToInternalError(errFindOrga)
-			return ctx.JSON(apiErr)
+			if errFindOrga.Error() == dtos.OrgDoesNotExistByCode {
+				_ = ctx.SendStatus(fiber.StatusNotFound)
+				apiErr := exceptions.ConvertToFunctionalError(errFindOrga, fiber.StatusNotFound)
+				return ctx.JSON(apiErr)
+			} else {
+				_ = ctx.SendStatus(fiber.StatusInternalServerError)
+				apiErr := exceptions.ConvertToInternalError(errFindOrga)
+				return ctx.JSON(apiErr)
+			}
 		}
 		if org == nil {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
