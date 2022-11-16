@@ -38,6 +38,8 @@ func main() {
 		fmt.Printf("Issuer type: [%s], Issuer value [%s]\n", oidTag, issuerName.Value)
 	}
 
+	fmt.Printf("SerialNumber [%s]\n", cert.SerialNumber)
+
 	var buf bytes.Buffer
 	fingerprint := sha256.Sum256(cert.Raw)
 	for i, f := range fingerprint {
