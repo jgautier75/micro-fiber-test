@@ -24,7 +24,7 @@ const (
 	cVerifier  = "cverifier"
 )
 
-func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientId string, oauthClientSecret string) func(ctx *fiber.Ctx) error {
+func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientId string, oauthClientSecret string, oauthDebug bool) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 
 		code := ctx.Query("code")
@@ -66,7 +66,7 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 		httpSession.Delete(cVerifier)
 
 		client := resty.New()
-		client.SetDebug(true)
+		client.SetDebug(oauthDebug)
 		client.SetCloseConnection(true)
 
 		resp, errOAuth := client.R().SetHeader(fiber.HeaderAccept, fiber.MIMEApplicationJSON).Post(reqURL)

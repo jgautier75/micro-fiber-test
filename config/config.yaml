@@ -13,6 +13,7 @@ app:
   oauthGitlab: https://github.com/login/oauth/authorize
   oauthCallback: https://github.com/login/oauth/access_token?client_id=%s&client_secret=%s&code=%s&code_verifier=%s
   oauthRedirectUri: https://localhost:8443/oauth/redirect
+  oauthDebug: true
   redisHost: localhost
   redisPort: 6379
   redisUser:
