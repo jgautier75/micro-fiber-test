@@ -69,7 +69,7 @@ func (u UserDao) CountByCriteria(criteria model.UserFilterCriteria) (int, error)
 func (u UserDao) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSearchResult, error) {
 	searchResults := model.UserSearchResult{}
 	var fullQry strings.Builder
-	qryPrefix := "select id,external_id,last_name,first_name,middle_name,login,email,status from users"
+	qryPrefix := u.koanf.String("users.find_by_query")
 	whereClause, vals := computeFindByCriteriaQuery(qryPrefix, criteria)
 	fullQry.WriteString(whereClause)
 	fullQry.WriteString(" order by  last_name,first_name asc")
@@ -122,7 +122,7 @@ func (u UserDao) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSe
 }
 
 func (u UserDao) FindByExternalId(tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
-	qry := "select id,external_id,last_name,first_name,middle_name,login,email,status from users where tenant_id=$1 and org_id=$2 and external_id=$3"
+	qry := u.koanf.String("users.find_by_external_id")
 	rows, errQuery := u.dbPool.Query(context.Background(), qry, tenantId, orgId, externalId)
 	if errQuery != nil {
 		return nil, errQuery
@@ -157,7 +157,7 @@ func (u UserDao) FindByExternalId(tenantId int64, orgId int64, externalId string
 }
 
 func (u UserDao) IsLoginInUse(login string) (int64, string, error) {
-	selStmt := "select id,external_id from users where login=$1"
+	selStmt := u.koanf.String("users.find_by_login")
 	rows, errQuery := u.dbPool.Query(context.Background(), selStmt, login)
 	defer rows.Close()
 	if errQuery != nil {
@@ -176,7 +176,7 @@ func (u UserDao) IsLoginInUse(login string) (int64, string, error) {
 }
 
 func (u UserDao) IsEmailInUse(email string) (int64, string, error) {
-	selStmt := "select id,external_id from users where email=$1"
+	selStmt := u.koanf.String("users.email_in_user")
 	rows, errQuery := u.dbPool.Query(context.Background(), selStmt, email)
 	defer rows.Close()
 	if errQuery != nil {
@@ -195,7 +195,7 @@ func (u UserDao) IsEmailInUse(email string) (int64, string, error) {
 }
 
 func (u UserDao) Delete(userExtId string) error {
-	selStmt := "delete from users where external_id=$1"
+	selStmt := u.koanf.String("users.delete_by_external_id")
 	rows, errQuery := u.dbPool.Query(context.Background(), selStmt, userExtId)
 	defer rows.Close()
 	return errQuery
