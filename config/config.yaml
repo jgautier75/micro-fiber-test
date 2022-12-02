@@ -18,3 +18,4 @@ app:
   redisPort: 6379
   redisUser:
   redisPass:
+  metricsPath: /metrics
