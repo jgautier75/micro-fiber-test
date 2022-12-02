@@ -34,3 +34,5 @@ TIPS:
   * https://stackoverflow.com/questions/61515186/when-using-cgo-enabled-is-must-and-what-happens
   * https://stackoverflow.com/questions/64531437/why-is-cgo-enabled-1-default
 * List ldflags: go build --ldflags="--help"
+* List dependencies updates: go list -m -u all
+* Update all dependencies: go get $(go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
