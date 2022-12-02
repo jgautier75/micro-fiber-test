@@ -18,4 +18,5 @@ app:
   redisPort: 6379
   redisUser:
   redisPass:
+  prometheusEnabled: false
   metricsPath: /metrics
