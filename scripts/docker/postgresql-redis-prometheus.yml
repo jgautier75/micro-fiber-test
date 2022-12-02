@@ -18,5 +18,15 @@ services:
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
     ports:
       - '6379:6379'
+  go-poc-prometheus:
+    image: prom/prometheus:v2.40.5
+    ports:
+      - '9000:9090'
+    volumes:
+      - prometheus:/etc/prometheus
+      - prometheus-data:/prometheus
+    command:
+      - --web.enable-lifecycle  --config.file=/etc/prometheus/prometheus.yml
 volumes:
   poc_pg_data:
+  prometheus-data:
