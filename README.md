@@ -36,3 +36,4 @@ TIPS:
 * List ldflags: go build --ldflags="--help"
 * List dependencies updates: go list -m -u all
 * Update all dependencies: go get $(go list -f '{{if not (or .Main .Indirect)}}{{.Path}}{{end}}' -m all)
+* Go installation on Debian: https://www.digitalocean.com/community/tutorials/how-to-install-go-on-debian-10
