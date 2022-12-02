@@ -51,6 +51,7 @@ func main() {
 	redisPort, errRedis := strconv.Atoi(redisStrPort)
 	redisUser := kConfig.String("app.redisUser")
 	redisPass := kConfig.String("app.redisPass")
+	metricsPath := kConfig.String("app.metricsPath")
 
 	var kSql = koanf.New(".")
 	errLoadSql := kSql.Load(file.Provider("config/sql_queries.toml"), toml.Parser())
@@ -122,6 +123,9 @@ func main() {
 	app := fiber.New(fConfig)
 	app.Use(middlewares.NewAccessLogger(accessLogger))
 	app.Use(middlewares.NewHttpFilterLogger(stdLogger))
+	prometheus := middlewares.PrometheusNew("micro-fiber-test")
+	prometheus.RegisterAt(app, metricsPath)
+	//app.Use(prometheus.Middleware)
 
 	app.Static("/", "./static")
 
