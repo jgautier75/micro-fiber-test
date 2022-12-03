@@ -1,19 +1,17 @@
 package main
 
 import (
-	"context"
 	"errors"
 	"fmt"
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/session"
 	"github.com/gofiber/storage/redis"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/toml"
-	"github.com/knadh/koanf/parsers/yaml"
 	"github.com/knadh/koanf/providers/file"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
+	"micro-fiber-test/pkg/config"
 	"micro-fiber-test/pkg/exceptions"
 	"micro-fiber-test/pkg/handlers"
 	"micro-fiber-test/pkg/middlewares"
@@ -22,7 +20,6 @@ import (
 	"os"
 	"os/signal"
 	"runtime"
-	"strconv"
 	"syscall"
 	"time"
 )
@@ -30,29 +27,7 @@ import (
 func main() {
 
 	// Load config file
-	var kConfig = koanf.New(".")
-	errLoadCfg := kConfig.Load(file.Provider("config/config.yaml"), yaml.Parser())
-	if errLoadCfg != nil {
-		panic(errLoadCfg)
-	}
-	targetPort := kConfig.String("http.server.port")
-	defaultTenantId := kConfig.Int64("app.tenant")
-	accessLogFile := kConfig.String("app.accessLogFile")
-	stdLogFile := kConfig.String("app.stdLogFile")
-	clientId := kConfig.String("app.oauthClientId")
-	clientSecret := kConfig.String("app.oauthClientSecret")
-	oauthCallback := kConfig.String("app.oauthCallback")
-	oauthRedirectUri := kConfig.String("app.oauthRedirectUri")
-	oauthGitlab := kConfig.String("app.oauthGitlab")
-	oauthDebug := kConfig.Bool("app.oauthDebug")
-	dbUrl := kConfig.String("app.pgUrl")
-	redisHost := kConfig.String("app.redisHost")
-	redisStrPort := kConfig.String("app.redisPort")
-	redisPort, errRedis := strconv.Atoi(redisStrPort)
-	redisUser := kConfig.String("app.redisUser")
-	redisPass := kConfig.String("app.redisPass")
-	metricsPath := kConfig.String("app.metricsPath")
-	prometheusEnabled := kConfig.Bool("app.prometheusEnabled")
+	configuration := config.LoadConfigFile("config/config.yaml")
 
 	var kSql = koanf.New(".")
 	errLoadSql := kSql.Load(file.Provider("config/sql_queries.toml"), toml.Parser())
@@ -60,13 +35,11 @@ func main() {
 		panic(errLoadSql)
 	}
 
-	fmt.Printf("Redis port error [%v]", errRedis)
-
 	// Setup loggers
-	accessLogger := configureLogger(accessLogFile, false, false)
-	stdLogger := configureLogger(stdLogFile, true, true)
+	accessLogger := configureLogger(configuration.LogsMetrics, false, false)
+	stdLogger := configureLogger(configuration.LogsStd, true, true)
 
-	dbPool, poolErr := configureCnxPool(kConfig, stdLogger)
+	dbPool, poolErr := configuration.SetupCnxPool(stdLogger)
 	if poolErr != nil {
 		panic(poolErr)
 	}
@@ -96,10 +69,10 @@ func main() {
 	}
 
 	redisStorage := redis.New(redis.Config{
-		Host:      redisHost,
-		Port:      redisPort,
-		Username:  redisUser,
-		Password:  redisPass,
+		Host:      configuration.RedisHost,
+		Port:      configuration.RedisPort,
+		Username:  configuration.RedisUser,
+		Password:  configuration.RedisPass,
 		URL:       "",
 		Database:  0,
 		Reset:     false,
@@ -124,41 +97,41 @@ func main() {
 	app := fiber.New(fConfig)
 	app.Use(middlewares.NewAccessLogger(accessLogger))
 	app.Use(middlewares.NewHttpFilterLogger(stdLogger))
-	if prometheusEnabled {
+	if configuration.PrometheusEnabled {
 		prometheus := middlewares.PrometheusNew("micro-fiber-test")
-		prometheus.RegisterAt(app, metricsPath)
+		prometheus.RegisterAt(app, configuration.PrometheusMetricsPath)
 		app.Use(prometheus.Middleware)
 	}
 
 	app.Static("/", "./static")
 
 	// Organizations
-	app.Get("/api/v1/organizations", endpoints.MakeOrgFindAll(defaultTenantId, orgSvc))
-	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(dbUrl, defaultTenantId, orgSvc))
-	app.Put("/api/v1/organizations/:orgCode", endpoints.MakeOrgUpdateEndpoint(defaultTenantId, orgSvc))
-	app.Delete("/api/v1/organizations/:orgCode", endpoints.MakeOrgDeleteEndpoint(defaultTenantId, orgSvc))
-	app.Get("/api/v1/organizations/:orgCode", endpoints.MakeOrgFindByCodeEndpoint(defaultTenantId, orgSvc))
+	app.Get("/api/v1/organizations", endpoints.MakeOrgFindAll(configuration.TenantId, orgSvc))
+	app.Post("/api/v1/organizations", endpoints.MakeOrgCreateEndpoint(configuration.RdbmsUrl, configuration.TenantId, orgSvc))
+	app.Put("/api/v1/organizations/:orgCode", endpoints.MakeOrgUpdateEndpoint(configuration.TenantId, orgSvc))
+	app.Delete("/api/v1/organizations/:orgCode", endpoints.MakeOrgDeleteEndpoint(configuration.TenantId, orgSvc))
+	app.Get("/api/v1/organizations/:orgCode", endpoints.MakeOrgFindByCodeEndpoint(configuration.TenantId, orgSvc))
 
 	// Sectors
-	app.Get("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorsFindByOrga(defaultTenantId, orgSvc, sectorSvc))
-	app.Post("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorCreateEndpoint(defaultTenantId, orgSvc, sectorSvc))
-	app.Put("/api/v1/organizations/:orgCode/sectors/:sectorCode", endpoints.MakeSectorUpdateEndpoint(defaultTenantId, orgSvc, sectorSvc))
-	app.Delete("/api/v1/organizations/:orgCode/sectors/:sectorCode", endpoints.MakeSectorDeleteEndpoint(defaultTenantId, orgSvc, sectorSvc))
+	app.Get("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorsFindByOrga(configuration.TenantId, orgSvc, sectorSvc))
+	app.Post("/api/v1/organizations/:orgCode/sectors", endpoints.MakeSectorCreateEndpoint(configuration.TenantId, orgSvc, sectorSvc))
+	app.Put("/api/v1/organizations/:orgCode/sectors/:sectorCode", endpoints.MakeSectorUpdateEndpoint(configuration.TenantId, orgSvc, sectorSvc))
+	app.Delete("/api/v1/organizations/:orgCode/sectors/:sectorCode", endpoints.MakeSectorDeleteEndpoint(configuration.TenantId, orgSvc, sectorSvc))
 
 	// Users
-	app.Get("/api/v1/organizations/:orgCode/users", endpoints.MakeUserSearchFilter(defaultTenantId, userSvc, orgSvc))
-	app.Get("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserFindByCode(defaultTenantId, userSvc, orgSvc))
-	app.Post("/api/v1/organizations/:orgCode/users", endpoints.MakeUserCreateEndpoint(defaultTenantId, userSvc, orgSvc))
-	app.Put("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserUpdate(defaultTenantId, userSvc, orgSvc))
-	app.Delete("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserDelete(defaultTenantId, userSvc, orgSvc))
+	app.Get("/api/v1/organizations/:orgCode/users", endpoints.MakeUserSearchFilter(configuration.TenantId, userSvc, orgSvc))
+	app.Get("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserFindByCode(configuration.TenantId, userSvc, orgSvc))
+	app.Post("/api/v1/organizations/:orgCode/users", endpoints.MakeUserCreateEndpoint(configuration.TenantId, userSvc, orgSvc))
+	app.Put("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserUpdate(configuration.TenantId, userSvc, orgSvc))
+	app.Delete("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserDelete(configuration.TenantId, userSvc, orgSvc))
 
 	// OAuth and authentication
-	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(store, oauthGitlab, clientId, oauthRedirectUri))
-	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, oauthCallback, clientId, clientSecret, oauthDebug))
+	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(store, configuration.OAuthGitlab, configuration.OAuthClientId, configuration.OAuthRedirectUri))
+	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, configuration.OAuthCallbackUrl, configuration.OAuthClientId, configuration.OAuthClientSecret, configuration.OAuthDebug))
 
 	go func() {
 		stdLogger.Info("Application -> ListenTLS")
-		if errTls := app.ListenTLS(":"+targetPort, "cert.pem", "key.pem"); errTls != nil {
+		if errTls := app.ListenTLS(":"+configuration.ServerPort, "cert.pem", "key.pem"); errTls != nil {
 			panic(errTls)
 		}
 	}()
@@ -177,12 +150,12 @@ func main() {
 
 // Configure metrics logger
 func configureLogger(logCfg string, consoleOutput bool, callerAndStack bool) *zap.Logger {
-	config := zap.NewProductionEncoderConfig()
-	config.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
+	zapConfig := zap.NewProductionEncoderConfig()
+	zapConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
 		enc.AppendString(t.UTC().Format("2006-01-02T15:04:05Z0700"))
 	}
-	fileEncoder := zapcore.NewJSONEncoder(config)
-	consoleEncoder := zapcore.NewConsoleEncoder(config)
+	fileEncoder := zapcore.NewJSONEncoder(zapConfig)
+	consoleEncoder := zapcore.NewConsoleEncoder(zapConfig)
 	logFile, _ := os.OpenFile(logCfg, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
 	writer := zapcore.AddSync(logFile)
 	defaultLogLevel := zapcore.InfoLevel
@@ -201,31 +174,4 @@ func configureLogger(logCfg string, consoleOutput bool, callerAndStack bool) *za
 	} else {
 		return zap.New(core)
 	}
-}
-
-// Configure rdbms connection pool
-func configureCnxPool(k *koanf.Koanf, zapLogger *zap.Logger) (*pgxpool.Pool, error) {
-
-	dbUrl := k.String("app.pgUrl")
-	poolMin := k.String("app.pgPoolMin")
-	poolMax := k.String("app.pgPoolMax")
-
-	zapLogger.Info("CnxPool -> Parse configuration")
-	dbConfig, errDbCfg := pgxpool.ParseConfig(dbUrl)
-	if errDbCfg != nil {
-		panic(errDbCfg)
-	}
-	pgMin, errMin := strconv.Atoi(poolMin)
-	if errMin != nil {
-		panic(errMin)
-	}
-	pgMax, errMax := strconv.Atoi(poolMax)
-	if errMax != nil {
-		panic(errMax)
-	}
-	dbConfig.MinConns = int32(pgMin)
-	dbConfig.MaxConns = int32(pgMax)
-
-	zapLogger.Info("CnxPool -> Initialize pool")
-	return pgxpool.NewWithConfig(context.Background(), dbConfig)
 }
