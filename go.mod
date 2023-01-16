@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-resty/resty v1.8.0
-	github.com/gofiber/adaptor/v2 v2.1.30
+	github.com/gofiber/adaptor/v2 v2.1.31
 	github.com/gofiber/fiber/v2 v2.41.0
 	github.com/gofiber/storage/redis v0.0.0-20230109091934-d46ce172d62c
 	github.com/golang-migrate/migrate/v4 v4.15.2
