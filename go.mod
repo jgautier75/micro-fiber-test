@@ -7,7 +7,7 @@ require (
 	github.com/go-resty/resty v1.8.0
 	github.com/gofiber/adaptor/v2 v2.1.31
 	github.com/gofiber/fiber/v2 v2.41.0
-	github.com/gofiber/storage/redis v0.0.0-20230109091934-d46ce172d62c
+	github.com/gofiber/storage/redis v0.0.0-20230130143549-c29f5aa8f5e7
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v5 v5.2.0
@@ -38,7 +38,7 @@ require (
 	github.com/docker/go-units v0.4.0 // indirect
 	github.com/fsnotify/fsnotify v1.6.0 // indirect
 	github.com/go-playground/locales v0.14.1 // indirect
-	github.com/go-playground/universal-translator v0.18.0 // indirect
+	github.com/go-playground/universal-translator v0.18.1 // indirect
 	github.com/go-redis/redis/v8 v8.11.5 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
 	github.com/golang/groupcache v0.0.0-20210331224755-41bb18bfe9da // indirect
