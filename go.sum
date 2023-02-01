@@ -531,6 +531,8 @@ github.com/gofiber/storage/redis v0.0.0-20230109091934-d46ce172d62c h1:IaXt5rbYb
 github.com/gofiber/storage/redis v0.0.0-20230109091934-d46ce172d62c/go.mod h1:ju/gDX76slLqmkVmclkK1rlcoLTHgsQiEpwUc5yECMI=
 github.com/gofiber/storage/redis v0.0.0-20230130143549-c29f5aa8f5e7 h1:YkzPUJm0/0XR8rFt5wetmOYmPkwwoJszeLGoe6epw08=
 github.com/gofiber/storage/redis v0.0.0-20230130143549-c29f5aa8f5e7/go.mod h1:ju/gDX76slLqmkVmclkK1rlcoLTHgsQiEpwUc5yECMI=
+github.com/gofiber/storage/redis v0.0.0-20230131071208-04b2bc9d807c h1:d2/e6+XMt0sFZbMQ0k4LSz4J7u2C2Xy5RXcpDI5EDqE=
+github.com/gofiber/storage/redis v0.0.0-20230131071208-04b2bc9d807c/go.mod h1:ju/gDX76slLqmkVmclkK1rlcoLTHgsQiEpwUc5yECMI=
 github.com/gofiber/utils v1.0.1 h1:knct4cXwBipWQqFrOy1Pv6UcgPM+EXo9jDgc66V1Qio=
 github.com/gofiber/utils v1.0.1/go.mod h1:pacRFtghAE3UoknMOUiXh2Io/nLWSUHtQCi/3QASsOc=
 github.com/gofrs/uuid v3.2.0+incompatible/go.mod h1:b2aQJv3Z4Fp6yNu3cdSllBxTCLRxnplIgP/c0N/04lM=
