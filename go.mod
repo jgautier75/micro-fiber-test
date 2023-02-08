@@ -5,9 +5,9 @@ go 1.19
 require (
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-resty/resty v1.8.0
-	github.com/gofiber/adaptor/v2 v2.1.31
+	github.com/gofiber/adaptor/v2 v2.1.32
 	github.com/gofiber/fiber/v2 v2.42.0
-	github.com/gofiber/storage/redis v0.0.0-20230131071208-04b2bc9d807c
+	github.com/gofiber/storage/redis v0.0.0-20230208140745-b66e5d19eb84
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v5 v5.2.0
@@ -78,7 +78,7 @@ require (
 	github.com/rivo/uniseg v0.4.3 // indirect
 	github.com/rogpeppe/go-internal v1.9.0 // indirect
 	github.com/savsgio/dictpool v0.0.0-20221023140959-7bf2e61cea94 // indirect
-	github.com/savsgio/gotils v0.0.0-20230203094617-bcbc01813b4f // indirect
+	github.com/savsgio/gotils v0.0.0-20230208104028-c358bd845dee // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
 	github.com/tinylib/msgp v1.1.8 // indirect
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
@@ -90,8 +90,8 @@ require (
 	golang.org/x/crypto v0.5.0 // indirect
 	golang.org/x/net v0.5.0 // indirect
 	golang.org/x/sync v0.1.0 // indirect
-	golang.org/x/sys v0.4.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	golang.org/x/sys v0.5.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
 	google.golang.org/grpc v1.50.1 // indirect
 	google.golang.org/protobuf v1.28.1 // indirect
