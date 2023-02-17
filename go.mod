@@ -7,7 +7,7 @@ require (
 	github.com/go-resty/resty v1.8.0
 	github.com/gofiber/adaptor/v2 v2.1.32
 	github.com/gofiber/fiber/v2 v2.42.0
-	github.com/gofiber/storage/redis v0.0.0-20230214080644-d711f6a26244
+	github.com/gofiber/storage/redis v0.0.0-20230217081042-18428bba8237
 	github.com/golang-migrate/migrate/v4 v4.15.2
 	github.com/google/uuid v1.3.0
 	github.com/jackc/pgx/v5 v5.3.0
