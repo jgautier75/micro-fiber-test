@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/go-playground/validator v9.31.0+incompatible
 	github.com/go-resty/resty v1.8.0
-	github.com/gofiber/adaptor/v2 v2.2.0
+	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/fiber/v2 v2.44.0
 	github.com/gofiber/storage/redis v1.3.4
 	github.com/golang-migrate/migrate/v4 v4.15.2
@@ -47,7 +47,7 @@ require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgservicefile v0.0.0-20221227161230-091c0ba34f0a // indirect
 	github.com/jackc/puddle/v2 v2.2.0 // indirect
-	github.com/klauspost/compress v1.16.4 // indirect
+	github.com/klauspost/compress v1.16.5 // indirect
 	github.com/leodido/go-urn v1.2.3 // indirect
 	github.com/lib/pq v1.10.7 // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
