@@ -8,15 +8,16 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/go-resty/resty"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
 	"io"
 	"micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/exceptions"
 	"micro-fiber-test/pkg/model"
 	"net/url"
 	"strings"
+
+	"github.com/go-resty/resty/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 )
 
 const (

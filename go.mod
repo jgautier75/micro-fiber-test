@@ -5,7 +5,7 @@ go 1.19
 require (
 	github.com/ansrivas/fiberprometheus/v2 v2.6.1
 	github.com/go-playground/validator v9.31.0+incompatible
-	github.com/go-resty/resty v1.8.0
+	github.com/go-resty/resty/v2 v2.10.0
 	github.com/gofiber/adaptor/v2 v2.2.1
 	github.com/gofiber/fiber/v2 v2.51.0
 	github.com/gofiber/storage/redis v1.3.4
