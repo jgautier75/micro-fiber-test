@@ -1,13 +1,14 @@
 package middlewares
 
 import (
+	"strings"
+	"sync"
+	"time"
+
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
 	"go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
-	"strings"
-	"sync"
-	"time"
 )
 
 const BsTxId = "bsTxId"
@@ -55,10 +56,10 @@ func NewHttpFilterLogger(zapLogger *zap.Logger) fiber.Handler {
 		debugReq := false
 		reqHeaders := make([]string, 0)
 		for k, v := range c.GetReqHeaders() {
-			if strings.ToLower(k) == "x-log-debug" && v == "1" {
+			if strings.ToLower(k) == "x-log-debug" && v[0] == "1" {
 				debugReq = true
 			}
-			reqHeaders = append(reqHeaders, k+"="+v)
+			reqHeaders = append(reqHeaders, k+"="+v[0])
 		}
 
 		if logReq && debugReq {
