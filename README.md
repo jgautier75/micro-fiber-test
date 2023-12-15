@@ -40,9 +40,7 @@ TIPS:
 - Generating a self signed certificate: run cmd/certSelfSigned
 - Prometheus metrics exposed by default on "/metrics" path
 
-Configuration:
-
-Main configuration file: config/config.yaml
+Configuration: config/config.yaml
 
 - PostgreSQL:
   - pgUrl: connection url (e.g: postgres://${user}:${password}@${host}:${5433}/${database})
