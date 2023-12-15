@@ -129,7 +129,7 @@ func main() {
 	app.Delete("/api/v1/organizations/:orgCode/users/:userId", endpoints.MakeUserDelete(configuration.TenantId, userSvc, orgSvc))
 
 	// OAuth and authentication
-	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(store, configuration.OAuthGitlab, configuration.OAuthClientId, configuration.OAuthRedirectUri))
+	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(store, configuration.OAuthGithub, configuration.OAuthClientId, configuration.OAuthRedirectUri))
 	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, configuration.OAuthCallbackUrl, configuration.OAuthClientId, configuration.OAuthClientSecret, configuration.OAuthDebug))
 
 	go func() {

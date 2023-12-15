@@ -95,7 +95,7 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 	}
 }
 
-func MakeGitlabAuthentication(store *session.Store, oauthGitlab string, clientId string, redirectUri string) func(ctx *fiber.Ctx) error {
+func MakeGitlabAuthentication(store *session.Store, oauthGithub string, clientId string, redirectUri string) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 		var s strings.Builder
 		state, errState := generateState(28)
@@ -134,7 +134,7 @@ func MakeGitlabAuthentication(store *session.Store, oauthGitlab string, clientId
 			return ctx.JSON(apiError)
 		}
 
-		s.WriteString(oauthGitlab)
+		s.WriteString(oauthGithub)
 		s.WriteString("?client_id=")
 		s.WriteString(clientId)
 		s.WriteString("&response_type=code")
