@@ -2,8 +2,6 @@ package endpoints
 
 import (
 	"errors"
-	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
 	"micro-fiber-test/pkg/converters"
 	commonsDto "micro-fiber-test/pkg/dto/commons"
 	dtos "micro-fiber-test/pkg/dto/commons"
@@ -14,6 +12,9 @@ import (
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
 	"strconv"
+
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
 )
 
 func MakeUserCreateEndpoint(defaultTenantId int64, userSvc api.UserServiceInterface, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
@@ -78,14 +79,15 @@ func MakeUserSearchFilter(defaultTenantId int64, userSvc api.UserServiceInterfac
 		// Ensure organization exists
 		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
-			_ = ctx.SendStatus(fiber.StatusInternalServerError)
-			apiErr := exceptions.ConvertToInternalError(errFindOrga)
-			return ctx.JSON(apiErr)
-		}
-		if org == nil {
-			_ = ctx.SendStatus(fiber.StatusNotFound)
-			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.OrgNotFound), fiber.StatusNotFound)
-			return ctx.JSON(apiErr)
+			if errFindOrga.Error() == commonsDto.OrgDoesNotExistByCode {
+				_ = ctx.SendStatus(fiber.StatusNotFound)
+				apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.OrgNotFound), fiber.StatusNotFound)
+				return ctx.JSON(apiErr)
+			} else {
+				_ = ctx.SendStatus(fiber.StatusInternalServerError)
+				apiErr := exceptions.ConvertToInternalError(errFindOrga)
+				return ctx.JSON(apiErr)
+			}
 		}
 
 		userFilterCriteria, errCriteria := buildCriteria(org, ctx)
