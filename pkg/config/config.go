@@ -2,6 +2,7 @@ package config
 
 import (
 	"context"
+
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -18,7 +19,7 @@ type Configuration struct {
 	OAuthClientSecret     string
 	OAuthCallbackUrl      string
 	OAuthRedirectUri      string
-	OAuthGitlab           string
+	OAuthGithub           string
 	OAuthDebug            bool
 	RdbmsUrl              string
 	RdbmsPoolMin          int
@@ -46,7 +47,7 @@ func LoadConfigFile(configPath string) *Configuration {
 		OAuthClientId:         kConfig.String("app.oauthClientId"),
 		OAuthClientSecret:     kConfig.String("app.oauthClientSecret"),
 		OAuthDebug:            kConfig.Bool("app.oauthDebug"),
-		OAuthGitlab:           kConfig.String("app.oauthGitlab"),
+		OAuthGithub:           kConfig.String("app.oauthGithub"),
 		OAuthRedirectUri:      kConfig.String("app.oauthRedirectUri"),
 		PrometheusEnabled:     kConfig.Bool("app.prometheusEnabled"),
 		PrometheusMetricsPath: kConfig.String("app.metricsPath"),
