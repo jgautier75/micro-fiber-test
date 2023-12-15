@@ -3,17 +3,9 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
-	"github.com/gofiber/storage/redis"
-	"github.com/knadh/koanf"
-	"github.com/knadh/koanf/parsers/toml"
-	"github.com/knadh/koanf/providers/file"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 	"micro-fiber-test/pkg/config"
 	"micro-fiber-test/pkg/exceptions"
-	"micro-fiber-test/pkg/handlers"
+	endpoints "micro-fiber-test/pkg/handlers"
 	"micro-fiber-test/pkg/middlewares"
 	"micro-fiber-test/pkg/repository/impl"
 	svcImpl "micro-fiber-test/pkg/service/impl"
@@ -22,6 +14,16 @@ import (
 	"runtime"
 	"syscall"
 	"time"
+
+	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/gofiber/storage/redis"
+	"github.com/knadh/koanf"
+	"github.com/knadh/koanf/parsers/toml"
+	"github.com/knadh/koanf/providers/file"
+	"go.uber.org/zap"
+	"go.uber.org/zap/zapcore"
 )
 
 func main() {
@@ -98,7 +100,7 @@ func main() {
 	app.Use(middlewares.NewAccessLogger(accessLogger))
 	app.Use(middlewares.NewHttpFilterLogger(stdLogger))
 	if configuration.PrometheusEnabled {
-		prometheus := middlewares.PrometheusNew("micro-fiber-test")
+		prometheus := fiberprometheus.New("micro-fiber-test")
 		prometheus.RegisterAt(app, configuration.PrometheusMetricsPath)
 		app.Use(prometheus.Middleware)
 	}
