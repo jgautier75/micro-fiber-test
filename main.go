@@ -88,9 +88,10 @@ func main() {
 	defCfg.Storage = redisStorage
 	store := session.New(defCfg)
 	fConfig := fiber.Config{
+		AppName:           "micro-fiber-test",
 		CaseSensitive:     true,
 		StrictRouting:     true,
-		EnablePrintRoutes: false,
+		EnablePrintRoutes: true,
 		UnescapePath:      true,
 		ErrorHandler:      defErrorHandler,
 	}
