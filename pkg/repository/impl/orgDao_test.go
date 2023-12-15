@@ -4,6 +4,10 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"micro-fiber-test/pkg/model"
+	"os"
+	"testing"
+
 	"github.com/golang-migrate/migrate/v4"
 	"github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
@@ -14,10 +18,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/testcontainers/testcontainers-go"
 	"github.com/testcontainers/testcontainers-go/wait"
-	"log"
-	"micro-fiber-test/pkg/model"
-	"os"
-	"testing"
 )
 
 type TestLogConsumer struct {
@@ -32,10 +32,10 @@ func TestDao(t *testing.T) {
 	ctx := context.Background()
 
 	// Force docker port on WSL (daemon.json > hosts)
-	err := os.Setenv("DOCKER_HOST", "tcp://localhost:2375")
+	/*-err := os.Setenv("DOCKER_HOST", "tcp://localhost:2375")
 	if err != nil {
 		log.Fatal(err)
-	}
+	}*/
 
 	// Get current directory
 	mydir, err := os.Getwd()
