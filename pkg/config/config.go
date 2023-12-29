@@ -30,6 +30,8 @@ type Configuration struct {
 	RedisPass             string
 	PrometheusMetricsPath string
 	PrometheusEnabled     bool
+	BasicAuthUser         string
+	BasicAuthPass         string
 }
 
 func LoadConfigFile(configPath string) *Configuration {
@@ -58,6 +60,8 @@ func LoadConfigFile(configPath string) *Configuration {
 		RedisPort:             kConfig.Int("app.redisPort"),
 		RedisUser:             kConfig.String("app.redisUser"),
 		RedisPass:             kConfig.String("app.redisPass"),
+		BasicAuthUser:         kConfig.String("app.basicAuthUser"),
+		BasicAuthPass:         kConfig.String("app.basicAuthPass"),
 	}
 	return &config
 }
