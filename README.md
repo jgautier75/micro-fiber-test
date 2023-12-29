@@ -12,6 +12,8 @@ REST endpoints: scripts/Insomnia.json ==> [Insomina](https://insomnia.rest/downl
 
 Github authentication (OAuth2 integration) ==> [Homepage](https://localhost:8443/index.html)
 
+Prometheus: https://localhost:8443/metrics
+
 Update all dependencies: go get -u then go mod tidy
 
 Build:
