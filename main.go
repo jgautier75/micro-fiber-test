@@ -3,6 +3,7 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"micro-fiber-test/pkg/config"
 	"micro-fiber-test/pkg/exceptions"
 	endpoints "micro-fiber-test/pkg/handlers"
@@ -108,6 +109,9 @@ func main() {
 	app := fiber.New(fConfig)
 	app.Use(middlewares.NewAccessLogger(accessLogger))
 	app.Use(middlewares.NewHttpFilterLogger(stdLogger))
+	if configuration.PrometheusEnabled {
+		app.Use(configuration.PrometheusMetricsPath, basicauth.New(middlewares.NewBasicAuthConfig(configuration.BasicAuthUser, configuration.BasicAuthPass)))
+	}
 	if configuration.PrometheusEnabled {
 		prometheus := fiberprometheus.New("micro-fiber-test")
 		prometheus.RegisterAt(app, configuration.PrometheusMetricsPath)
