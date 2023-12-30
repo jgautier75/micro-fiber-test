@@ -20,3 +20,5 @@ app:
   redisPass:
   prometheusEnabled: true
   metricsPath: /metrics
+  basicAuthUser: user
+  basicAuthPass: pass
