@@ -20,6 +20,36 @@ services:
       - REDIS_DISABLE_COMMANDS=FLUSHDB,FLUSHALL
     ports:
       - '6379:6379'
+  go-poc-prometheus:
+    image: prom/prometheus:v2.40.5
+    container_name: go-poc-prometheus
+    ports:
+      - '9000:9090'
+    volumes:
+      - ./prometheus/:/etc/prometheus/
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+  go-poc-grafana:
+    image: grafana/grafana:latest
+    container_name: go-poc-grafana
+    depends_on:
+      - go-poc-prometheus
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+    environment:
+      - GF_AUTH_DISABLE_LOGIN_FORM=false
+      - GF_AUTH_ANONYMOUS_ENABLED=false
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    ports:
+      - '3000:3000'
 volumes:
   poc_pg_data:
+  prometheus:
+  prometheus-data:
+  grafana_data:
   
