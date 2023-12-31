@@ -48,8 +48,9 @@ Location: config/config.yaml
   - pgUrl: connection url (e.g: postgres://${user}:${password}@${host}:${5433}/${database})
   - pgPoolMin: Connection pool min size
   - pgPoolMax: Connection pool max size
-- accessLogFile: Access log file (access.log)
-- stdLogFile: Standard log file (micro-fiber-test.log)
+- Logs:
+  - accessLogFile: Access log file (access.log)
+  - stdLogFile: Standard log file (micro-fiber-test.log)
 - OAuth2 - Gitlab:
   - oauthClientId: clientId for github connection
   - oauthClientSecret: client secret for github connection
@@ -62,7 +63,8 @@ Location: config/config.yaml
   - redisPort: Redis port (defaults to 6379)
   - redisUser: Redis account username (Default blank)
   - redisPass: Redis account password (Default blank)
-- prometheusEnabled: Enable/Disable prometheus middleware
-- metricsPath: Prometheus exposition path (Defaults to "/metrics")
-- basicAuthUser: Basic authentication user for metrics endpoint
-- basicAuthPass: Basic authentication password for metrics endpoint
+- Prometheus:
+  - prometheusEnabled: Enable/Disable prometheus middleware
+  - metricsPath: Prometheus exposition path (Defaults to "/metrics")
+  - basicAuthUser: Basic authentication user for metrics endpoint
+  - basicAuthPass: Basic authentication password for metrics endpoint
