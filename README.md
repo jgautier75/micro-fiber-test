@@ -1,18 +1,16 @@
 # micro-fiber-test
 
-postgreSQL container: scripts/docker_postgres.txt
+Docker compose file scripts/postgresql-16.yml for containers:
 
-redis container: scripts/docker-redis.yml
+* postgreSQL (port 5433, database schema: migrations/20220905_usm_init.up.sql)
+* [Redis](http://localhost:6379) is used as session storage backend for Github authentication integration (Standard OAuth flow)
+* [Prometheus](http://localhost:9000)
+* [Grafana](http://loalhost:3000) (Default credentials: admin/amin)
 
-Redis is used as session storage backend
-
-database schema: migrations/20220905_usm_init.up.sql
 
 REST endpoints: scripts/Insomnia.json ==> [Insomina](https://insomnia.rest/download)
 
 Github authentication (OAuth2 integration) ==> [Homepage](https://localhost:8443/index.html)
-
-Prometheus: https://localhost:8443/metrics
 
 Update all dependencies: go get -u then go mod tidy
 
@@ -24,7 +22,7 @@ Build:
 
 -s: remove symbol table
 
-TIPS:
+**TIPS**
 
 - List possible platforms: go tool dist list
 - Operating System & Architecture: go env GOOS GOARCH
@@ -42,7 +40,9 @@ TIPS:
 - Generating a self signed certificate: run cmd/certSelfSigned
 - Prometheus metrics exposed by default on "/metrics" path
 
-Configuration: config/config.yaml
+**CONFIGURATION**
+
+Location: config/config.yaml
 
 - PostgreSQL:
   - pgUrl: connection url (e.g: postgres://${user}:${password}@${host}:${5433}/${database})
@@ -64,3 +64,5 @@ Configuration: config/config.yaml
   - redisPass: Redis account password (Default blank)
 - prometheusEnabled: Enable/Disable prometheus middleware
 - metricsPath: Prometheus exposition path (Defaults to "/metrics")
+- basicAuthUser: Basic authentication user for metrics endpoint
+- basicAuthPass: Basic authentication password for metrics endpoint
