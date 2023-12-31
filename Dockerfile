@@ -21,6 +21,9 @@ FROM scratch
 WORKDIR /app
 
 COPY --from=builder /app/micro-fiber-test /usr/bin/
+COPY *.pem ./
+COPY config ./config
+COPY static ./static
 
 EXPOSE 8443
 
