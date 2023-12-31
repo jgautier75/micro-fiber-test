@@ -1,4 +1,4 @@
-FROM golang:1.19.3-alpine3.16 as builder
+FROM golang:1.21.5-alpine3.19 as builder
 
 WORKDIR /app
 
@@ -21,6 +21,9 @@ FROM scratch
 WORKDIR /app
 
 COPY --from=builder /app/micro-fiber-test /usr/bin/
+COPY *.pem ./
+COPY config ./config
+COPY static ./static
 
 EXPOSE 8443
 

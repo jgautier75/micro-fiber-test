@@ -111,8 +111,6 @@ func main() {
 	app.Use(middlewares.NewHttpFilterLogger(stdLogger))
 	if configuration.PrometheusEnabled {
 		app.Use(configuration.PrometheusMetricsPath, basicauth.New(middlewares.NewBasicAuthConfig(configuration.BasicAuthUser, configuration.BasicAuthPass)))
-	}
-	if configuration.PrometheusEnabled {
 		prometheus := fiberprometheus.New("micro-fiber-test")
 		prometheus.RegisterAt(app, configuration.PrometheusMetricsPath)
 		app.Use(prometheus.Middleware)
