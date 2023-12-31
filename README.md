@@ -1,5 +1,9 @@
 # micro-fiber-test
 
+Micro-service prototype for organizations, sectors and users management through REST apis.
+
+**SETUP**
+
 Docker compose file scripts/postgresql-16.yml for containers:
 
 * postgreSQL (port 5433, database schema: migrations/20220905_usm_init.up.sql)
