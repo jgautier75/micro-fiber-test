@@ -27,13 +27,13 @@ import (
 	"go.uber.org/zap/zapcore"
 )
 
-const V1_ROOT = "/api/v1"
-const ORG_V1_ROOT = V1_ROOT + "/organizations"
-const ORG_V1_ORG_CODE = ORG_V1_ROOT + "/:orgCode"
-const SECTORS_V1_ROOT = ORG_V1_ORG_CODE + "/sectors"
-const SECTORS_V1_SECTOR_CODE = SECTORS_V1_ROOT + "/:sectorCode"
-const USERS_V1_ROOT = ORG_V1_ORG_CODE + "/users"
-const USERS_V1_USER_ID = USERS_V1_ROOT + "/:userId"
+const V1Root = "/api/v1"
+const OrgV1Root = V1Root + "/organizations"
+const OrgV1OrgCode = OrgV1Root + "/:orgCode"
+const SectorsV1Root = OrgV1OrgCode + "/sectors"
+const SectorsV1SectorCode = SectorsV1Root + "/:sectorCode"
+const UsersV1Root = OrgV1OrgCode + "/users"
+const UsersV1UserId = UsersV1Root + "/:userId"
 
 func main() {
 
@@ -119,24 +119,24 @@ func main() {
 	app.Static("/", "./static")
 
 	// Organizations
-	app.Get(ORG_V1_ROOT, endpoints.MakeOrgFindAll(configuration.TenantId, orgSvc))
-	app.Post(ORG_V1_ROOT, endpoints.MakeOrgCreateEndpoint(configuration.RdbmsUrl, configuration.TenantId, orgSvc))
-	app.Put(ORG_V1_ORG_CODE, endpoints.MakeOrgUpdateEndpoint(configuration.TenantId, orgSvc))
-	app.Delete(ORG_V1_ORG_CODE, endpoints.MakeOrgDeleteEndpoint(configuration.TenantId, orgSvc))
-	app.Get(ORG_V1_ORG_CODE, endpoints.MakeOrgFindByCodeEndpoint(configuration.TenantId, orgSvc))
+	app.Get(OrgV1Root, endpoints.MakeOrgFindAll(configuration.TenantId, orgSvc))
+	app.Post(OrgV1Root, endpoints.MakeOrgCreateEndpoint(configuration.RdbmsUrl, configuration.TenantId, orgSvc))
+	app.Put(OrgV1OrgCode, endpoints.MakeOrgUpdateEndpoint(configuration.TenantId, orgSvc))
+	app.Delete(OrgV1OrgCode, endpoints.MakeOrgDeleteEndpoint(configuration.TenantId, orgSvc))
+	app.Get(OrgV1OrgCode, endpoints.MakeOrgFindByCodeEndpoint(configuration.TenantId, orgSvc))
 
 	// Sectors
-	app.Get(SECTORS_V1_ROOT, endpoints.MakeSectorsFindByOrga(configuration.TenantId, orgSvc, sectorSvc))
-	app.Post(SECTORS_V1_ROOT, endpoints.MakeSectorCreateEndpoint(configuration.TenantId, orgSvc, sectorSvc))
-	app.Put(SECTORS_V1_SECTOR_CODE, endpoints.MakeSectorUpdateEndpoint(configuration.TenantId, orgSvc, sectorSvc))
-	app.Delete(SECTORS_V1_SECTOR_CODE, endpoints.MakeSectorDeleteEndpoint(configuration.TenantId, orgSvc, sectorSvc))
+	app.Get(SectorsV1Root, endpoints.MakeSectorsFindByOrga(configuration.TenantId, orgSvc, sectorSvc))
+	app.Post(SectorsV1Root, endpoints.MakeSectorCreateEndpoint(configuration.TenantId, orgSvc, sectorSvc))
+	app.Put(SectorsV1SectorCode, endpoints.MakeSectorUpdateEndpoint(configuration.TenantId, orgSvc, sectorSvc))
+	app.Delete(SectorsV1SectorCode, endpoints.MakeSectorDeleteEndpoint(configuration.TenantId, orgSvc, sectorSvc))
 
 	// Users
-	app.Get(USERS_V1_ROOT, endpoints.MakeUserSearchFilter(configuration.TenantId, userSvc, orgSvc))
-	app.Get(USERS_V1_USER_ID, endpoints.MakeUserFindByCode(configuration.TenantId, userSvc, orgSvc))
-	app.Post(USERS_V1_ROOT, endpoints.MakeUserCreateEndpoint(configuration.TenantId, userSvc, orgSvc))
-	app.Put(USERS_V1_USER_ID, endpoints.MakeUserUpdate(configuration.TenantId, userSvc, orgSvc))
-	app.Delete(USERS_V1_USER_ID, endpoints.MakeUserDelete(configuration.TenantId, userSvc, orgSvc))
+	app.Get(UsersV1Root, endpoints.MakeUserSearchFilter(configuration.TenantId, userSvc, orgSvc))
+	app.Get(UsersV1UserId, endpoints.MakeUserFindByCode(configuration.TenantId, userSvc, orgSvc))
+	app.Post(UsersV1Root, endpoints.MakeUserCreateEndpoint(configuration.TenantId, userSvc, orgSvc))
+	app.Put(UsersV1UserId, endpoints.MakeUserUpdate(configuration.TenantId, userSvc, orgSvc))
+	app.Delete(UsersV1UserId, endpoints.MakeUserDelete(configuration.TenantId, userSvc, orgSvc))
 
 	// OAuth and authentication
 	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(store, configuration.OAuthGithub, configuration.OAuthClientId, configuration.OAuthRedirectUri))
