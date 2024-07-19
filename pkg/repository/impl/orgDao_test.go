@@ -84,7 +84,7 @@ func TestDao(t *testing.T) {
 	fmt.Printf("postgreSQL started on [%s]:[%s] \n", host, port)
 	pgUrl := fmt.Sprintf("postgres://postgres:postgres@%s:%d/testdb?sslmode=disable", host, port.Int())
 
-	fmt.Printf("pgURL [%s]0\n", pgUrl)
+	fmt.Printf("pgURL [%s]\n", pgUrl)
 	// Run migrations: create tables, sequences, ...
 	db, err := sql.Open("postgres", pgUrl)
 	driver, err := postgres.WithInstance(db, &postgres.Config{})
@@ -121,12 +121,18 @@ func TestDao(t *testing.T) {
 	org.SetType(model.OrgTypeCommunity)
 	orgId, err := orgRepo.Create(&org)
 	if err != nil {
-		fmt.Printf("pgError [%v]", err)
+		fmt.Printf("pgError [%v]\n", err)
 	} else {
 		assert.NotNil(t, orgId)
-		fmt.Printf("orgId [%d]", orgId)
+		fmt.Printf("orgId [%d]\n", orgId)
 	}
 
-	fmt.Printf("Container logs: [%v]", logConsumer.Msgs)
+	var orgs = make([]model.OrganizationInterface, 1)
+	orgs, err = orgRepo.FindAll(1)
+	for _, o := range orgs {
+		fmt.Printf("Created org label [%v]\n", o.GetLabel())
+	}
+
+	fmt.Printf("Container logs: [%v]\n", logConsumer.Msgs)
 
 }
