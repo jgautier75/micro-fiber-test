@@ -28,6 +28,9 @@ func main() {
 		fmt.Println(errF)
 	}
 
+	fmt.Printf("NotBefore: [%s]", cert.NotBefore.String())
+	fmt.Printf("NotAfter: [%s]", cert.NotAfter.String())
+
 	for _, certNames := range cert.Subject.Names {
 		oidTag := getTagForOid(certNames.Type)
 		fmt.Printf("Certificate type: [%s], Certificate value [%s]\n", oidTag, certNames.Value)

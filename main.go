@@ -3,28 +3,24 @@ package main
 import (
 	"errors"
 	"fmt"
+	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
+	"github.com/gofiber/fiber/v2/middleware/session"
+	"github.com/knadh/koanf"
+	"github.com/knadh/koanf/parsers/toml"
+	"github.com/knadh/koanf/providers/file"
 	"micro-fiber-test/pkg/config"
 	"micro-fiber-test/pkg/exceptions"
 	endpoints "micro-fiber-test/pkg/handlers"
+	"micro-fiber-test/pkg/logging"
 	"micro-fiber-test/pkg/middlewares"
+	redisConfig "micro-fiber-test/pkg/redis"
 	"micro-fiber-test/pkg/repository/impl"
 	svcImpl "micro-fiber-test/pkg/service/impl"
 	"os"
 	"os/signal"
-	"runtime"
 	"syscall"
-	"time"
-
-	"github.com/ansrivas/fiberprometheus/v2"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
-	"github.com/gofiber/storage/redis"
-	"github.com/knadh/koanf"
-	"github.com/knadh/koanf/parsers/toml"
-	"github.com/knadh/koanf/providers/file"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
 )
 
 const V1Root = "/api/v1"
@@ -40,19 +36,23 @@ func main() {
 	// Load config file
 	configuration := config.LoadConfigFile("config/config.yaml")
 
+	// Setup loggers
+	accessLogger := logging.ConfigureLogger(configuration.LogsMetrics, false, false)
+	stdLogger := logging.ConfigureLogger(configuration.LogsStd, true, true)
+
+	// Setup connection pool
+	stdLogger.Info("Database connectivity -> Setup connection pool")
+	dbPool, poolErr := configuration.SetupCnxPool(stdLogger)
+	if poolErr != nil {
+		panic(poolErr)
+	}
+	defer dbPool.Close()
+
+	stdLogger.Info("SQL queries -> load from config file")
 	var kSql = koanf.New(".")
 	errLoadSql := kSql.Load(file.Provider("config/sql_queries.toml"), toml.Parser())
 	if errLoadSql != nil {
 		panic(errLoadSql)
-	}
-
-	// Setup loggers
-	accessLogger := configureLogger(configuration.LogsMetrics, false, false)
-	stdLogger := configureLogger(configuration.LogsStd, true, true)
-
-	dbPool, poolErr := configuration.SetupCnxPool(stdLogger)
-	if poolErr != nil {
-		panic(poolErr)
 	}
 
 	stdLogger.Info("Dao & Services -> Setup & inject")
@@ -79,18 +79,7 @@ func main() {
 		return c.Status(fiber.StatusInternalServerError).JSON(exceptions.ConvertToInternalError(err))
 	}
 
-	redisStorage := redis.New(redis.Config{
-		Host:      configuration.RedisHost,
-		Port:      configuration.RedisPort,
-		Username:  configuration.RedisUser,
-		Password:  configuration.RedisPass,
-		URL:       "",
-		Database:  0,
-		Reset:     false,
-		TLSConfig: nil,
-		PoolSize:  10 * runtime.GOMAXPROCS(0),
-	},
-	)
+	redisStorage := redisConfig.ConfigureRedisStorage(configuration)
 
 	// Session storage in redis
 	defCfg := session.ConfigDefault
@@ -156,35 +145,4 @@ func main() {
 	fmt.Println("Gracefully shutting down...")
 	_ = app.Shutdown()
 
-	stdLogger.Info("Closing connections pool")
-	dbPool.Close()
-
-}
-
-// Configure metrics logger
-func configureLogger(logCfg string, consoleOutput bool, callerAndStack bool) *zap.Logger {
-	zapConfig := zap.NewProductionEncoderConfig()
-	zapConfig.EncodeTime = func(t time.Time, enc zapcore.PrimitiveArrayEncoder) {
-		enc.AppendString(t.UTC().Format("2006-01-02T15:04:05Z0700"))
-	}
-	fileEncoder := zapcore.NewJSONEncoder(zapConfig)
-	consoleEncoder := zapcore.NewConsoleEncoder(zapConfig)
-	logFile, _ := os.OpenFile(logCfg, os.O_APPEND|os.O_CREATE|os.O_WRONLY, 0644)
-	writer := zapcore.AddSync(logFile)
-	defaultLogLevel := zapcore.InfoLevel
-	var core zapcore.Core
-	if consoleOutput {
-		core = zapcore.NewTee(
-			zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
-			zapcore.NewCore(consoleEncoder, zapcore.AddSync(os.Stdout), defaultLogLevel))
-	} else {
-		core = zapcore.NewTee(
-			zapcore.NewCore(fileEncoder, writer, defaultLogLevel),
-		)
-	}
-	if callerAndStack {
-		return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zapcore.ErrorLevel))
-	} else {
-		return zap.New(core)
-	}
 }
