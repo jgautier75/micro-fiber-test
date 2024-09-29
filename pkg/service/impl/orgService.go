@@ -4,12 +4,13 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/model"
 	daoApi "micro-fiber-test/pkg/repository/api"
 	svcApi "micro-fiber-test/pkg/service/api"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type OrganizationService struct {
@@ -18,8 +19,8 @@ type OrganizationService struct {
 	dbPool  *pgxpool.Pool
 }
 
-func (orgService *OrganizationService) Create(cnxParams string, defaultTenant int64, organization model.OrganizationInterface) (int64, error) {
-	orgExists, err := orgService.orgDao.ExistsByCode(defaultTenant, organization.GetCode())
+func (orgService *OrganizationService) Create(cnxParams string, defaultTenant int64, organization model.Organization) (int64, error) {
+	orgExists, err := orgService.orgDao.ExistsByCode(defaultTenant, organization.Code)
 	if err != nil {
 		return 0, err
 	}
@@ -27,7 +28,7 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 		return 0, errors.New(commons.OrgAlreadyExistsByCode)
 	}
 
-	exists, errOrg := orgService.orgDao.ExistsByLabel(defaultTenant, organization.GetLabel())
+	exists, errOrg := orgService.orgDao.ExistsByLabel(defaultTenant, organization.Label)
 	if errOrg != nil {
 		return 0, errOrg
 	}
@@ -72,14 +73,14 @@ func (orgService *OrganizationService) Create(cnxParams string, defaultTenant in
 		return 0, errOrgCreateTx
 	}
 	sector := model.Sector{}
-	sector.SetLabel(organization.GetLabel())
-	sector.SetCode(organization.GetCode())
-	sector.SetTenantId(defaultTenant)
-	sector.SetSectorStatus(model.SectorStatusActive)
-	sector.SetDepth(0)
-	sector.SetHasParent(false)
-	sector.SetOrgId(id)
-	_, errSect := orgService.sectDao.CreateInTx(tx, &sector)
+	sector.Label = organization.Label
+	sector.Code = organization.Code
+	sector.TenantId = defaultTenant
+	sector.Status = model.SectorStatusActive
+	sector.Depth = 0
+	sector.HasParent = false
+	sector.OrgId = id
+	_, errSect := orgService.sectDao.CreateInTx(tx, sector)
 	if errSect != nil {
 		return 0, errSect
 	}
@@ -91,7 +92,7 @@ func (orgService *OrganizationService) Update(defaultTenant int64, orgCode strin
 	if err != nil {
 		return err
 	}
-	if orgExists == false {
+	if !orgExists {
 		return errors.New(commons.OrgDoesNotExistByCode)
 	}
 	return orgService.orgDao.Update(orgCode, label)
@@ -102,32 +103,33 @@ func (orgService *OrganizationService) Delete(defaultTenant int64, orgCode strin
 	if errExists != nil {
 		return errExists
 	}
-	if orgExists == false {
+	if !orgExists {
 		return errors.New(commons.OrgDoesNotExistByCode)
 	}
 	org, errFind := orgService.orgDao.FindByCode(orgCode)
 	if errFind != nil {
 		return errFind
 	}
-	errSector := orgService.sectDao.DeleteByOrgId(org.GetId())
+	errSector := orgService.sectDao.DeleteByOrgId(org.Id)
 	if errSector != nil {
 		return errSector
 	}
 	return orgService.orgDao.Delete(orgCode)
 }
 
-func (orgService *OrganizationService) FindByCode(defaultTenant int64, code string) (model.OrganizationInterface, error) {
+func (orgService *OrganizationService) FindByCode(defaultTenant int64, code string) (model.Organization, error) {
+	var nilOrg model.Organization
 	orgExists, errExists := orgService.orgDao.ExistsByCode(defaultTenant, code)
 	if errExists != nil {
-		return nil, errExists
+		return nilOrg, errExists
 	}
-	if orgExists == false {
-		return nil, errors.New(commons.OrgDoesNotExistByCode)
+	if !orgExists {
+		return nilOrg, errors.New(commons.OrgDoesNotExistByCode)
 	}
 	return orgService.orgDao.FindByCode(code)
 }
 
-func (orgService *OrganizationService) FindAll(defaultTenant int64) ([]model.OrganizationInterface, error) {
+func (orgService *OrganizationService) FindAll(defaultTenant int64) ([]model.Organization, error) {
 	orgs, err := orgService.orgDao.FindAll(defaultTenant)
 	if err != nil {
 		return nil, err

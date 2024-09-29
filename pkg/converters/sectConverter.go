@@ -5,16 +5,16 @@ import (
 	"micro-fiber-test/pkg/model"
 )
 
-func ConvertSectorModelToSectorResp(sect model.SectorInterface) sectors.SectorResponse {
+func ConvertSectorModelToSectorResp(sect model.Sector) sectors.SectorResponse {
 	sectorResponse := sectors.SectorResponse{
-		Id:     sect.GetId(),
-		Code:   sect.GetCode(),
-		Label:  sect.GetLabel(),
-		Depth:  sect.GetDepth(),
-		Status: sect.GetSectorStatus(),
+		Id:     sect.Id,
+		Code:   sect.Code,
+		Label:  sect.Label,
+		Depth:  sect.Depth,
+		Status: sect.Status,
 	}
-	if sect.GetHasParent() {
-		sectorResponse.ParentId = sect.GetParentId().Int64
+	if sect.HasParent {
+		sectorResponse.ParentId = sect.ParentId.Int64
 	}
 	return sectorResponse
 }
