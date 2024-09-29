@@ -9,6 +9,7 @@ import (
 	"micro-fiber-test/pkg/dto/sectors"
 	"micro-fiber-test/pkg/exceptions"
 	"micro-fiber-test/pkg/helpers"
+	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
 
@@ -18,6 +19,7 @@ import (
 
 func MakeSectorsFindByOrga(defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
+		var nilOrg model.Organization
 		orgCode := ctx.Params("orgCode")
 		org, errFindOrga := orgSvc.FindByCode(defaultTenantId, orgCode)
 		if errFindOrga != nil {
@@ -31,7 +33,7 @@ func MakeSectorsFindByOrga(defaultTenantId int64, orgSvc api.OrganizationService
 				return ctx.JSON(apiErr)
 			}
 		}
-		if &org == nil {
+		if org == nilOrg {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
 			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
@@ -43,7 +45,7 @@ func MakeSectorsFindByOrga(defaultTenantId int64, orgSvc api.OrganizationService
 			apiErr := exceptions.ConvertToInternalError(errFindAll)
 			return ctx.JSON(apiErr)
 		} else {
-			sectorsResponseList := make([]sectors.SectorResponse, len(sectorsList), len(sectorsList))
+			sectorsResponseList := make([]sectors.SectorResponse, len(sectorsList))
 			for inc, s := range sectorsList {
 				sgResponse := converters.ConvertSectorModelToSectorResp(s)
 				sectorsResponseList[inc] = sgResponse
@@ -55,7 +57,6 @@ func MakeSectorsFindByOrga(defaultTenantId int64, orgSvc api.OrganizationService
 			sectListResponse := sectors.SectorListResponse{
 				Sectors: s,
 			}
-			ctx.GetRespHeader(fiber.HeaderContentType, fiber.MIMEApplicationJavaScriptCharsetUTF8)
 			_ = ctx.SendStatus(fiber.StatusOK)
 			return ctx.JSON(sectListResponse)
 		}
@@ -64,6 +65,10 @@ func MakeSectorsFindByOrga(defaultTenantId int64, orgSvc api.OrganizationService
 
 func MakeSectorCreateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
+
+		var nilOrg model.Organization
+		var nilSector model.Sector
+
 		orgCode := ctx.Params("orgCode")
 
 		// Ensure organization exists
@@ -73,7 +78,7 @@ func MakeSectorCreateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 			apiErr := exceptions.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
-		if &org == nil {
+		if org == nilOrg {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
 			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
@@ -106,7 +111,7 @@ func MakeSectorCreateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 			if errParent != nil {
 				return errParent
 			}
-			if &parentSector != nil {
+			if parentSector != nilSector {
 				nillableInt64 := sql.NullInt64{
 					Int64: parentSector.Id,
 					Valid: true,
@@ -149,6 +154,10 @@ func MakeSectorCreateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 
 func MakeSectorDeleteEndpoint(defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
+
+		var nilOrg model.Organization
+		var nilSector model.Sector
+
 		orgCode := ctx.Params("orgCode")
 
 		// Ensure organization exists
@@ -158,7 +167,7 @@ func MakeSectorDeleteEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 			apiErr := exceptions.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
-		if &org == nil {
+		if org == nilOrg {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
 			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
@@ -170,7 +179,7 @@ func MakeSectorDeleteEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		if errSect != nil {
 			return errSect
 		}
-		if &sector == nil || sector.Id <= 0 {
+		if sector == nilSector || sector.Id <= 0 {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
 			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.SectorNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
@@ -190,6 +199,9 @@ func MakeSectorDeleteEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 
 func MakeSectorUpdateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServiceInterface, sectSvc api.SectorServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
+		var nilOrg model.Organization
+		var nilSector model.Sector
+
 		orgCode := ctx.Params("orgCode")
 
 		// Ensure organization exists
@@ -199,7 +211,7 @@ func MakeSectorUpdateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 			apiErr := exceptions.ConvertToInternalError(errFindOrga)
 			return ctx.JSON(apiErr)
 		}
-		if &org == nil {
+		if org == nilOrg {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
 			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.OrgNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)
@@ -211,7 +223,7 @@ func MakeSectorUpdateEndpoint(defaultTenantId int64, orgSvc api.OrganizationServ
 		if errSect != nil {
 			return errSect
 		}
-		if &sector == nil || sector.Id <= 0 {
+		if sector == nilSector || sector.Id <= 0 {
 			_ = ctx.SendStatus(fiber.StatusNotFound)
 			apiErr := exceptions.ConvertToFunctionalError(errors.New(dtos.SectorNotFound), fiber.StatusNotFound)
 			return ctx.JSON(apiErr)

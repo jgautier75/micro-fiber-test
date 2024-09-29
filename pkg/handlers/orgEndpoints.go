@@ -21,9 +21,7 @@ var validate = validator.New()
 
 func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.OrganizationServiceInterface) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
-
-		var bsTxId interface{}
-		bsTxId = ctx.Locals(middlewares.BsTxId)
+		var bsTxId interface{} = ctx.Locals(middlewares.BsTxId)
 		fmt.Printf("Bs Transaction id: [%s]", bsTxId)
 
 		orgReq := orgs.CreateOrgRequest{}
@@ -144,7 +142,6 @@ func MakeOrgFindByCodeEndpoint(defaultTenantId int64, orgSvc api.OrganizationSer
 			}
 		} else {
 			orgResponse := converters.ConvertOrgModelToOrgResp(org)
-			ctx.GetRespHeader(fiber.HeaderContentType, fiber.MIMEApplicationJavaScriptCharsetUTF8)
 			_ = ctx.SendStatus(fiber.StatusOK)
 			return ctx.JSON(orgResponse)
 		}
@@ -159,7 +156,7 @@ func MakeOrgFindAll(defaultTenantId int64, orgSvc api.OrganizationServiceInterfa
 			apiErr := exceptions.ConvertToInternalError(errFindAll)
 			return ctx.JSON(apiErr)
 		} else {
-			orgResponseList := make([]orgs.OrganizationResponse, len(orgsList), len(orgsList))
+			orgResponseList := make([]orgs.OrganizationResponse, len(orgsList))
 			for inc, org := range orgsList {
 				orgResponse := converters.ConvertOrgModelToOrgResp(org)
 				orgResponseList[inc] = orgResponse
@@ -167,7 +164,6 @@ func MakeOrgFindAll(defaultTenantId int64, orgSvc api.OrganizationServiceInterfa
 			orgListResponse := orgs.OrganizationListResponse{
 				Organizations: orgResponseList,
 			}
-			ctx.GetRespHeader(fiber.HeaderContentType, fiber.MIMEApplicationJavaScriptCharsetUTF8)
 			_ = ctx.SendStatus(fiber.StatusOK)
 			return ctx.JSON(orgListResponse)
 		}
