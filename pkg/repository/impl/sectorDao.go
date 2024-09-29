@@ -2,12 +2,12 @@ package impl
 
 import (
 	"context"
-	"database/sql"
+	"micro-fiber-test/pkg/model"
+	"micro-fiber-test/pkg/repository/api"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knadh/koanf"
-	"micro-fiber-test/pkg/model"
-	"micro-fiber-test/pkg/repository/api"
 )
 
 type SectorDao struct {
@@ -22,17 +22,17 @@ func NewSectorDao(pool *pgxpool.Pool, kSql *koanf.Koanf) api.SectorDaoInterface 
 	return &sectorDao
 }
 
-func (s SectorDao) CreateInTx(tx pgx.Tx, sector model.SectorInterface) (int64, error) {
+func (s SectorDao) CreateInTx(tx pgx.Tx, sector model.Sector) (int64, error) {
 	var id int64
 	insertStmt := s.koanf.String("sectors.create")
-	errQuery := tx.QueryRow(context.Background(), insertStmt, sector.GetTenantId(), sector.GetOrgId(), sector.GetCode(), sector.GetLabel(), sector.GetParentId(), sector.GetHasParent(), sector.GetDepth(), sector.GetSectorStatus()).Scan(&id)
+	errQuery := tx.QueryRow(context.Background(), insertStmt, sector.TenantId, sector.OrgId, sector.Code, sector.Label, sector.ParentId, sector.HasParent, sector.Depth, sector.Status).Scan(&id)
 	return id, errQuery
 }
 
-func (s SectorDao) Create(sector model.SectorInterface) (int64, error) {
+func (s SectorDao) Create(sector model.Sector) (int64, error) {
 	var id int64
 	insertStmt := s.koanf.String("sectors.create")
-	errQuery := s.dbPool.QueryRow(context.Background(), insertStmt, sector.GetTenantId(), sector.GetOrgId(), sector.GetCode(), sector.GetLabel(), sector.GetParentId(), sector.GetHasParent(), sector.GetDepth(), sector.GetSectorStatus()).Scan(&id)
+	errQuery := s.dbPool.QueryRow(context.Background(), insertStmt, sector.TenantId, sector.OrgId, sector.Code, sector.Label, sector.ParentId, sector.HasParent, sector.Depth, sector.Status).Scan(&id)
 	return id, errQuery
 }
 
@@ -42,40 +42,17 @@ func (s SectorDao) DeleteByOrgId(orgId int64) error {
 	return errDelete
 }
 
-func (s SectorDao) FindSectorsByTenantOrg(tenantId int64, orgId int64) ([]model.SectorInterface, error) {
+func (s SectorDao) FindSectorsByTenantOrg(tenantId int64, orgId int64) ([]model.Sector, error) {
 	selStmt := s.koanf.String("sectors.findbytenantorg")
 	rows, e := s.dbPool.Query(context.Background(), selStmt, tenantId, orgId)
-	defer rows.Close()
 	if e != nil {
 		return nil, e
 	}
+	defer rows.Close()
 
-	var sectors []model.SectorInterface
-	for rows.Next() {
-		var id int64
-		var tenantId int64
-		var orgId int64
-		var rsCode string
-		var label string
-		var parentId sql.NullInt64
-		var hasParent bool
-		var depth int
-		var status model.SectorStatus
-		errScan := rows.Scan(&id, &tenantId, &orgId, &rsCode, &label, &parentId, &hasParent, &depth, &status)
-		if errScan != nil {
-			return nil, errScan
-		}
-		sector := model.Sector{}
-		sector.SetId(id)
-		sector.SetTenantId(tenantId)
-		sector.SetOrgId(orgId)
-		sector.SetCode(rsCode)
-		sector.SetLabel(label)
-		sector.SetParentId(parentId)
-		sector.SetHasParent(hasParent)
-		sector.SetDepth(depth)
-		sector.SetSectorStatus(status)
-		sectors = append(sectors, &sector)
+	sectors, errCollect := pgx.CollectRows(rows, pgx.RowToStructByName[model.Sector])
+	if errCollect != nil {
+		return nil, errCollect
 	}
 	return sectors, nil
 }
@@ -83,10 +60,11 @@ func (s SectorDao) FindSectorsByTenantOrg(tenantId int64, orgId int64) ([]model.
 func (s SectorDao) FindByLabel(defaultTenantId int64, label string) (int64, string, error) {
 	selStmt := s.koanf.String("sectors.findbylabel")
 	rows, errQry := s.dbPool.Query(context.Background(), selStmt, defaultTenantId, label)
-	defer rows.Close()
 	if errQry != nil {
 		return 0, "", errQry
 	}
+	defer rows.Close()
+
 	for rows.Next() {
 		var rsCode string
 		var rsId int64
@@ -99,40 +77,21 @@ func (s SectorDao) FindByLabel(defaultTenantId int64, label string) (int64, stri
 	return 0, "", nil
 }
 
-func (s SectorDao) FindByCode(defaultTenantId int64, code string) (model.SectorInterface, error) {
+func (s SectorDao) FindByCode(defaultTenantId int64, code string) (model.Sector, error) {
+	var nilSector model.Sector
 	selStmt := s.koanf.String("sectors.findbycode")
 	rows, errQry := s.dbPool.Query(context.Background(), selStmt, defaultTenantId, code)
 	if errQry != nil {
-		return nil, errQry
+		return nilSector, errQry
 	}
 	defer rows.Close()
-	for rows.Next() {
-		var id int64
-		var tenantId int64
-		var orgId int64
-		var rsCode string
-		var label string
-		var parentId sql.NullInt64
-		var hasParent bool
-		var depth int
-		var status model.SectorStatus
-		errScan := rows.Scan(&id, &tenantId, &orgId, &rsCode, &label, &parentId, &hasParent, &depth, &status)
-		if errScan != nil {
-			return nil, errScan
-		}
-		sector := model.Sector{}
-		sector.SetId(id)
-		sector.SetTenantId(tenantId)
-		sector.SetOrgId(orgId)
-		sector.SetCode(rsCode)
-		sector.SetLabel(label)
-		sector.SetParentId(parentId)
-		sector.SetHasParent(hasParent)
-		sector.SetDepth(depth)
-		sector.SetSectorStatus(status)
-		return &sector, nil
+
+	sector, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.Sector])
+	if err != nil {
+		return nilSector, err
 	}
-	return nil, nil
+
+	return sector, nil
 }
 
 func (s SectorDao) FindRootSector(defaultTenantId int64, orgId int64) (int64, error) {
@@ -151,12 +110,18 @@ func (s SectorDao) FindRootSector(defaultTenantId int64, orgId int64) (int64, er
 		}
 		sectorId = id
 	}
+	if rows.Err() != nil {
+		return 0, rows.Err()
+	}
 	return sectorId, nil
 }
 
 func (s SectorDao) DeleteSector(defaultTenantId int64, sectorId int64) error {
 	deleteStmt := s.koanf.String("sectors.delete")
 	_, e := s.dbPool.Exec(context.Background(), deleteStmt, defaultTenantId, sectorId, sectorId)
+	if e != nil {
+		return e
+	}
 	return e
 }
 

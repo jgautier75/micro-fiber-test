@@ -7,22 +7,22 @@ import (
 
 func ConvertOrgReqToDaoModel(defaultTenantId int64, orgReq orgs.CreateOrgRequest) model.Organization {
 	org := model.Organization{}
-	org.SetTenantId(defaultTenantId)
+	org.TenantId = defaultTenantId
 	if orgReq.Label != nil {
-		org.SetLabel(*orgReq.Label)
+		org.Label = *orgReq.Label
 	}
 	if orgReq.Kind != nil {
-		org.SetType(model.OrganizationType(*orgReq.Kind))
+		org.Type = model.OrganizationType(*orgReq.Kind)
 	}
-	org.SetStatus(model.OrganizationStatus(orgReq.Status))
+	org.Status = model.OrganizationStatus(orgReq.Status)
 	return org
 }
 
-func ConvertOrgModelToOrgResp(org model.OrganizationInterface) orgs.OrganizationResponse {
+func ConvertOrgModelToOrgResp(org model.Organization) orgs.OrganizationResponse {
 	return orgs.OrganizationResponse{
-		Code:   org.GetCode(),
-		Label:  org.GetLabel(),
-		Status: int(org.GetStatus()),
-		Kind:   string(org.GetType()),
+		Code:   org.Code,
+		Label:  org.Label,
+		Status: int(org.Status),
+		Kind:   string(org.Type),
 	}
 }

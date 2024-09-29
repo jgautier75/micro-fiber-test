@@ -16,9 +16,9 @@ func NewSectorService(daoP api.SectorDaoInterface) svcApi.SectorServiceInterface
 	return &SectorService{dao: daoP}
 }
 
-func (sectorSvc SectorService) Create(defautTenantId int64, sector model.SectorInterface) (int64, error) {
-	sector.SetTenantId(defautTenantId)
-	id, _, err := sectorSvc.dao.FindByLabel(defautTenantId, sector.GetLabel())
+func (sectorSvc SectorService) Create(defautTenantId int64, sector model.Sector) (int64, error) {
+	sector.TenantId = defautTenantId
+	id, _, err := sectorSvc.dao.FindByLabel(defautTenantId, sector.Label)
 	if err != nil {
 		return 0, err
 	}
@@ -34,7 +34,7 @@ func (sectorSvc SectorService) Create(defautTenantId int64, sector model.SectorI
 	}
 }
 
-func (sectorSvc SectorService) FindSectorsByTenantOrg(defaultTenantId int64, orgId int64) ([]model.SectorInterface, error) {
+func (sectorSvc SectorService) FindSectorsByTenantOrg(defaultTenantId int64, orgId int64) ([]model.Sector, error) {
 	sectors, err := sectorSvc.dao.FindSectorsByTenantOrg(defaultTenantId, orgId)
 	if err != nil {
 		return nil, err
@@ -42,7 +42,7 @@ func (sectorSvc SectorService) FindSectorsByTenantOrg(defaultTenantId int64, org
 	return sectors, nil
 }
 
-func (sectorSvc SectorService) FindByCode(defaultTenantId int64, code string) (model.SectorInterface, error) {
+func (sectorSvc SectorService) FindByCode(defaultTenantId int64, code string) (model.Sector, error) {
 	return sectorSvc.dao.FindByCode(defaultTenantId, code)
 }
 

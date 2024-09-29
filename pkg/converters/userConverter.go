@@ -7,39 +7,39 @@ import (
 
 func ConvertUserReqToDaoModel(defaultTenantId int64, userReq users.CreateUserReq) model.User {
 	usr := model.User{}
-	usr.SetTenantId(defaultTenantId)
-	usr.SetLastName(userReq.LastName)
-	usr.SetFirstName(userReq.FirstName)
+	usr.TenantId = defaultTenantId
+	usr.LastName = userReq.LastName
+	usr.FirstName = userReq.FirstName
 	if userReq.MiddleName != nil {
-		usr.SetMiddleName(*userReq.MiddleName)
+		usr.MiddleName = *userReq.MiddleName
 	}
-	usr.SetLogin(userReq.Login)
-	usr.SetEmail(userReq.Email)
-	usr.SetStatus(model.UserStatus(userReq.Status))
+	usr.Login = userReq.Login
+	usr.Email = userReq.Email
+	usr.Status = model.UserStatus(userReq.Status)
 	return usr
 }
 
 func ConvertUserUpdateReqToDaoModel(defaultTenantId int64, userReq users.UpdateUserReq) model.User {
 	usr := model.User{}
-	usr.SetTenantId(defaultTenantId)
-	usr.SetLastName(userReq.LastName)
-	usr.SetFirstName(userReq.FirstName)
+	usr.TenantId = defaultTenantId
+	usr.LastName = userReq.LastName
+	usr.FirstName = userReq.FirstName
 	if userReq.MiddleName != nil {
-		usr.SetMiddleName(*userReq.MiddleName)
+		usr.MiddleName = *userReq.MiddleName
 	}
-	usr.SetEmail(userReq.Email)
-	usr.SetLogin(userReq.Login)
+	usr.Email = userReq.Email
+	usr.Login = userReq.Login
 	return usr
 }
 
-func ConvertFromDaoModelToUserResponse(userInterface model.UserInterface) users.UserResponse {
+func ConvertFromDaoModelToUserResponse(userInterface model.User) users.UserResponse {
 	usr := users.UserResponse{}
-	usr.ExternalId = userInterface.GetExternalId()
-	usr.Login = userInterface.GetLogin()
-	usr.Email = userInterface.GetEmail()
-	usr.LastName = userInterface.GetLastName()
-	usr.FirstName = userInterface.GetFirstName()
-	usr.MiddleName = userInterface.GetMiddleName()
-	usr.Status = int(userInterface.GetStatus())
+	usr.ExternalId = userInterface.ExternalId
+	usr.Login = userInterface.Login
+	usr.Email = userInterface.Email
+	usr.LastName = userInterface.LastName
+	usr.FirstName = userInterface.FirstName
+	usr.MiddleName = userInterface.MiddleName
+	usr.Status = int(userInterface.Status)
 	return usr
 }

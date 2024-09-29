@@ -2,10 +2,6 @@ package endpoints
 
 import (
 	"fmt"
-	"github.com/go-playground/validator"
-	"github.com/gofiber/fiber/v2"
-	"github.com/google/uuid"
-	jsoniter "github.com/json-iterator/go"
 	"micro-fiber-test/pkg/converters"
 	dtos "micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/dto/orgs"
@@ -14,6 +10,11 @@ import (
 	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/service/api"
 	"micro-fiber-test/pkg/validation"
+
+	"github.com/go-playground/validator"
+	"github.com/gofiber/fiber/v2"
+	"github.com/google/uuid"
+	jsoniter "github.com/json-iterator/go"
 )
 
 var validate = validator.New()
@@ -42,8 +43,8 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 
 		org := converters.ConvertOrgReqToDaoModel(defaultTenantId, orgReq)
 		codeUUID := uuid.New().String()
-		org.SetCode(codeUUID)
-		switch org.GetStatus() {
+		org.Code = codeUUID
+		switch org.Status {
 		case model.OrgStatusDraft, model.OrgStatusActive, model.OrgStatusInactive, model.OrgStatusDeleted:
 		default:
 			_ = ctx.SendStatus(fiber.StatusBadRequest)
@@ -54,7 +55,7 @@ func MakeOrgCreateEndpoint(rdbmsUrl string, defaultTenantId int64, orgSvc api.Or
 			}
 			return ctx.JSON(apiErr)
 		}
-		_, err := orgSvc.Create(rdbmsUrl, defaultTenantId, &org)
+		_, err := orgSvc.Create(rdbmsUrl, defaultTenantId, org)
 		if err != nil {
 			if err.Error() == dtos.OrgAlreadyExistsByCode {
 				_ = ctx.SendStatus(fiber.StatusConflict)

@@ -16,11 +16,11 @@ func NewUserService(daoP api.UserDaoInterface) svcApi.UserServiceInterface {
 	return &UserService{dao: daoP}
 }
 
-func (u UserService) Create(defautTenantId int64, user model.UserInterface) (int64, error) {
-	user.SetTenantId(defautTenantId)
+func (u UserService) Create(defautTenantId int64, user model.User) (int64, error) {
+	user.TenantId = defautTenantId
 
 	// Login is unique
-	idUsr, _, errLogin := u.dao.IsLoginInUse(user.GetLogin())
+	idUsr, _, errLogin := u.dao.IsLoginInUse(user.Login)
 	if errLogin != nil {
 		return 0, errLogin
 	}
@@ -29,7 +29,7 @@ func (u UserService) Create(defautTenantId int64, user model.UserInterface) (int
 	}
 
 	// Email is unique
-	idUsr, _, errEmail := u.dao.IsEmailInUse(user.GetEmail())
+	idUsr, _, errEmail := u.dao.IsEmailInUse(user.Email)
 	if errEmail != nil {
 		return 0, errEmail
 	}
@@ -45,23 +45,23 @@ func (u UserService) Create(defautTenantId int64, user model.UserInterface) (int
 	}
 }
 
-func (u UserService) Update(user model.UserInterface) error {
+func (u UserService) Update(user model.User) error {
 
 	// Login is unique
-	_, extId, errLogin := u.dao.IsLoginInUse(user.GetLogin())
+	_, extId, errLogin := u.dao.IsLoginInUse(user.Login)
 	if errLogin != nil {
 		return errLogin
 	}
-	if extId != user.GetExternalId() {
+	if extId != user.ExternalId {
 		return errors.New(commons.UserLoginAlreadyInUse)
 	}
 
 	// Email is unique
-	_, extId, errEmail := u.dao.IsEmailInUse(user.GetEmail())
+	_, extId, errEmail := u.dao.IsEmailInUse(user.Email)
 	if errEmail != nil {
 		return errEmail
 	}
-	if extId != user.GetExternalId() {
+	if extId != user.ExternalId {
 		return errors.New(commons.UserEmailAlreadyInUse)
 	}
 
@@ -81,7 +81,7 @@ func (u UserService) FindByCriteria(criteria model.UserFilterCriteria) (model.Us
 	return userSearchResult, nil
 }
 
-func (u UserService) FindByCode(tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
+func (u UserService) FindByCode(tenantId int64, orgId int64, externalId string) (model.User, error) {
 	return u.dao.FindByExternalId(tenantId, orgId, externalId)
 }
 

@@ -3,12 +3,14 @@ package impl
 import (
 	"context"
 	"fmt"
-	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/knadh/koanf"
 	"micro-fiber-test/pkg/model"
 	"micro-fiber-test/pkg/repository/api"
 	"strconv"
 	"strings"
+
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/knadh/koanf"
 )
 
 const (
@@ -34,16 +36,16 @@ func NewUserDao(pool *pgxpool.Pool, kSql *koanf.Koanf) api.UserDaoInterface {
 	return &userDao
 }
 
-func (u UserDao) Create(user model.UserInterface) (int64, error) {
+func (u UserDao) Create(user model.User) (int64, error) {
 	var id int64
 	insertStmt := u.koanf.String("users.create")
-	errQuery := u.dbPool.QueryRow(context.Background(), insertStmt, user.GetTenantId(), user.GetOrgId(), user.GetExternalId(), user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetStatus()).Scan(&id)
+	errQuery := u.dbPool.QueryRow(context.Background(), insertStmt, user.TenantId, user.OrgId, user.ExternalId, user.LastName, user.FirstName, user.MiddleName, user.Login, user.Email, user.Status).Scan(&id)
 	return id, errQuery
 }
 
-func (u UserDao) Update(user model.UserInterface) error {
+func (u UserDao) Update(user model.User) error {
 	updateStmt := u.koanf.String("users.update_by_external_id")
-	_, errQuery := u.dbPool.Exec(context.Background(), updateStmt, user.GetLastName(), user.GetFirstName(), user.GetMiddleName(), user.GetLogin(), user.GetEmail(), user.GetExternalId())
+	_, errQuery := u.dbPool.Exec(context.Background(), updateStmt, user.LastName, user.FirstName, user.MiddleName, user.Login, user.Email, user.ExternalId)
 	return errQuery
 }
 
@@ -90,30 +92,10 @@ func (u UserDao) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSe
 		return searchResults, errQuery
 	}
 	defer rows.Close()
-	var users []model.UserInterface
-	for rows.Next() {
-		var id int64
-		var externalId string
-		var lastName string
-		var firstName string
-		var middleName string
-		var login string
-		var email string
-		var status int64
-		errScan := rows.Scan(&id, &externalId, &lastName, &firstName, &middleName, &login, &email, &status)
-		if errScan != nil {
-			return searchResults, errScan
-		}
-		userInterface := model.User{}
-		userInterface.SetId(id)
-		userInterface.SetExternalId(externalId)
-		userInterface.SetLastName(lastName)
-		userInterface.SetFirstName(firstName)
-		userInterface.SetMiddleName(middleName)
-		userInterface.SetLogin(login)
-		userInterface.SetEmail(email)
-		userInterface.SetStatus(model.UserStatus(status))
-		users = append(users, &userInterface)
+
+	users, errCollect := pgx.CollectRows(rows, pgx.RowToStructByName[model.User])
+	if errCollect != nil {
+		return searchResults, errCollect
 	}
 
 	searchResults.Users = users
@@ -121,51 +103,33 @@ func (u UserDao) FindByCriteria(criteria model.UserFilterCriteria) (model.UserSe
 	return searchResults, nil
 }
 
-func (u UserDao) FindByExternalId(tenantId int64, orgId int64, externalId string) (model.UserInterface, error) {
+func (u UserDao) FindByExternalId(tenantId int64, orgId int64, externalId string) (model.User, error) {
 	qry := u.koanf.String("users.find_by_external_id")
+	var nilUser model.User
 	rows, errQuery := u.dbPool.Query(context.Background(), qry, tenantId, orgId, externalId)
 	if errQuery != nil {
-		return nil, errQuery
+		return nilUser, errQuery
 	}
 	defer rows.Close()
-	///var userInterface model.User
-	for rows.Next() {
-		var id int64
-		var extId string
-		var lastName string
-		var firstName string
-		var middleName string
-		var login string
-		var email string
-		var status int64
-		errScan := rows.Scan(&id, &extId, &lastName, &firstName, &middleName, &login, &email, &status)
-		if errScan != nil {
-			return nil, errScan
-		}
-		userInterface := model.User{}
-		userInterface.SetId(id)
-		userInterface.SetExternalId(extId)
-		userInterface.SetLastName(lastName)
-		userInterface.SetFirstName(firstName)
-		userInterface.SetMiddleName(middleName)
-		userInterface.SetLogin(login)
-		userInterface.SetEmail(email)
-		userInterface.SetStatus(model.UserStatus(status))
-		return &userInterface, nil
+
+	userInterface, err := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.User])
+	if err != nil {
+		return nilUser, err
 	}
-	return nil, nil
+	return userInterface, nil
 }
 
 func (u UserDao) IsLoginInUse(login string) (int64, string, error) {
 	selStmt := u.koanf.String("users.find_by_login")
 	rows, errQuery := u.dbPool.Query(context.Background(), selStmt, login)
-	defer rows.Close()
 	if errQuery != nil {
 		return 0, "", errQuery
 	}
-	for rows.Next() {
-		var id int64
-		var extId string
+	defer rows.Close()
+
+	var id int64
+	var extId string
+	if rows.Next() {
 		errScan := rows.Scan(&id, &extId)
 		if errScan != nil {
 			return 0, "", errScan
@@ -178,13 +142,14 @@ func (u UserDao) IsLoginInUse(login string) (int64, string, error) {
 func (u UserDao) IsEmailInUse(email string) (int64, string, error) {
 	selStmt := u.koanf.String("users.email_in_user")
 	rows, errQuery := u.dbPool.Query(context.Background(), selStmt, email)
-	defer rows.Close()
 	if errQuery != nil {
 		return 0, "", errQuery
 	}
-	for rows.Next() {
-		var id int64
-		var extId string
+	defer rows.Close()
+
+	var id int64
+	var extId string
+	if rows.Next() {
 		errScan := rows.Scan(&id, &extId)
 		if errScan != nil {
 			return 0, "", errScan
@@ -197,6 +162,9 @@ func (u UserDao) IsEmailInUse(email string) (int64, string, error) {
 func (u UserDao) Delete(userExtId string) error {
 	selStmt := u.koanf.String("users.delete_by_external_id")
 	rows, errQuery := u.dbPool.Query(context.Background(), selStmt, userExtId)
+	if errQuery != nil {
+		return errQuery
+	}
 	defer rows.Close()
 	return errQuery
 }

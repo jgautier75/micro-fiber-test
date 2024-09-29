@@ -2,11 +2,12 @@ package impl
 
 import (
 	"context"
+	"micro-fiber-test/pkg/model"
+	"micro-fiber-test/pkg/repository/api"
+
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/knadh/koanf"
-	"micro-fiber-test/pkg/model"
-	"micro-fiber-test/pkg/repository/api"
 )
 
 type OrgDao struct {
@@ -21,17 +22,17 @@ func NewOrgDao(pool *pgxpool.Pool, kSql *koanf.Koanf) api.OrgDaoInterface {
 	return &orgDao
 }
 
-func (orgRepo *OrgDao) CreateInTx(tx pgx.Tx, org model.OrganizationInterface) (int64, error) {
+func (orgRepo *OrgDao) CreateInTx(tx pgx.Tx, org model.Organization) (int64, error) {
 	var id int64
 	insertStmt := orgRepo.koanf.String("organizations.create")
-	errQuery := tx.QueryRow(context.Background(), insertStmt, org.GetTenantId(), org.GetCode(), org.GetLabel(), org.GetType(), org.GetStatus()).Scan(&id)
+	errQuery := tx.QueryRow(context.Background(), insertStmt, org.TenantId, org.Code, org.Label, org.Type, org.Status).Scan(&id)
 	return id, errQuery
 }
 
-func (orgRepo *OrgDao) Create(org model.OrganizationInterface) (int64, error) {
+func (orgRepo *OrgDao) Create(org model.Organization) (int64, error) {
 	var id int64
 	insertStmt := orgRepo.koanf.String("organizations.create")
-	errQuery := orgRepo.dbPool.QueryRow(context.Background(), insertStmt, org.GetTenantId(), org.GetCode(), org.GetLabel(), org.GetType(), org.GetStatus()).Scan(&id)
+	errQuery := orgRepo.dbPool.QueryRow(context.Background(), insertStmt, org.TenantId, org.Code, org.Label, org.Type, org.Status).Scan(&id)
 	return id, errQuery
 }
 
@@ -47,65 +48,33 @@ func (orgRepo *OrgDao) Delete(orgCode string) error {
 	return errQuery
 }
 
-func (orgRepo *OrgDao) FindByCode(code string) (model.OrganizationInterface, error) {
+func (orgRepo *OrgDao) FindByCode(code string) (model.Organization, error) {
+	var nilOrg model.Organization
 	selStmt := orgRepo.koanf.String("organizations.findbycode")
 	rows, e := orgRepo.dbPool.Query(context.Background(), selStmt, code)
 	if e != nil {
-		return nil, e
+		return nilOrg, e
 	}
 	defer rows.Close()
-
-	for rows.Next() {
-		var id int64
-		var tenantId int64
-		var rsType model.OrganizationType
-		var rsCode string
-		var label string
-		var status model.OrganizationStatus
-		errScan := rows.Scan(&id, &tenantId, &rsCode, &label, &rsType, &status)
-		if e != nil {
-			return nil, errScan
-		}
-		org := model.Organization{}
-		org.SetId(id)
-		org.SetTenantId(tenantId)
-		org.SetCode(rsCode)
-		org.SetLabel(label)
-		org.SetType(rsType)
-		org.SetStatus(status)
-		return &org, nil
+	org, errCollect := pgx.CollectOneRow(rows, pgx.RowToStructByName[model.Organization])
+	if errCollect != nil {
+		return nilOrg, errCollect
 	}
-	return nil, nil
+
+	return org, nil
 }
 
-func (orgRepo *OrgDao) FindAll(tenantId int64) ([]model.OrganizationInterface, error) {
+func (orgRepo *OrgDao) FindAll(tenantId int64) ([]model.Organization, error) {
+	var nilOrg []model.Organization
 	selStmt := orgRepo.koanf.String("organizations.findall")
 	rows, errQry := orgRepo.dbPool.Query(context.Background(), selStmt, tenantId)
 	if errQry != nil {
 		return nil, errQry
 	}
-
 	defer rows.Close()
-	var orgs []model.OrganizationInterface
-	for rows.Next() {
-		var id int64
-		var tenantId int64
-		var rsCode string
-		var label string
-		var kind string
-		var status int64
-		errScan := rows.Scan(&id, &tenantId, &rsCode, &label, &kind, &status)
-		if errScan != nil {
-			return nil, errScan
-		}
-		org := model.Organization{}
-		org.SetId(id)
-		org.SetTenantId(tenantId)
-		org.SetCode(rsCode)
-		org.SetLabel(label)
-		org.SetStatus(model.OrganizationStatus(status))
-		org.SetType(model.OrganizationType(kind))
-		orgs = append(orgs, &org)
+	orgs, errCollect := pgx.CollectRows(rows, pgx.RowToStructByName[model.Organization])
+	if errCollect != nil {
+		return nilOrg, errCollect
 	}
 	return orgs, nil
 }
@@ -113,10 +82,10 @@ func (orgRepo *OrgDao) FindAll(tenantId int64) ([]model.OrganizationInterface, e
 func (orgRepo *OrgDao) ExistsByCode(tenantId int64, code string) (bool, error) {
 	selStmt := orgRepo.koanf.String("organizations.existsbycode")
 	rows, e := orgRepo.dbPool.Query(context.Background(), selStmt, tenantId, code)
-	defer rows.Close()
 	if e != nil {
 		return false, e
 	}
+	defer rows.Close()
 	cnt := 0
 	for rows.Next() {
 		err := rows.Scan(&cnt)
@@ -135,10 +104,10 @@ func (orgRepo *OrgDao) ExistsByCode(tenantId int64, code string) (bool, error) {
 func (orgRepo *OrgDao) ExistsByLabel(tenantId int64, label string) (bool, error) {
 	selStmt := orgRepo.koanf.String("organizations.findbylabel")
 	rows, errQry := orgRepo.dbPool.Query(context.Background(), selStmt, tenantId, label)
-	defer rows.Close()
 	if errQry != nil {
 		return false, errQry
 	}
+	defer rows.Close()
 	cnt := 0
 	for rows.Next() {
 		err := rows.Scan(&cnt)

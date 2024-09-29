@@ -10,10 +10,10 @@ type CreateSectorReq struct {
 
 func ConvertSectorReqToDaoModel(defaultTenantId int64, sectorReq CreateSectorReq) model.Sector {
 	sect := model.Sector{}
-	sect.SetTenantId(defaultTenantId)
+	sect.TenantId = defaultTenantId
 	if sectorReq.Label != nil {
-		sect.SetLabel(*sectorReq.Label)
+		sect.Label = *sectorReq.Label
 	}
-	sect.SetSectorStatus(model.SectorStatus(sectorReq.Status))
+	sect.Status = model.SectorStatus(sectorReq.Status)
 	return sect
 }

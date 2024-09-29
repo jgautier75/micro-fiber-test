@@ -5,11 +5,11 @@ import (
 )
 
 type UserDaoInterface interface {
-	Create(user model.UserInterface) (int64, error)
-	FindByExternalId(tenantId int64, orgId int64, externalId string) (model.UserInterface, error)
+	Create(user model.User) (int64, error)
+	FindByExternalId(tenantId int64, orgId int64, externalId string) (model.User, error)
 	FindByCriteria(criteria model.UserFilterCriteria) (model.UserSearchResult, error)
 	CountByCriteria(criteria model.UserFilterCriteria) (int, error)
-	Update(user model.UserInterface) error
+	Update(user model.User) error
 	IsLoginInUse(login string) (int64, string, error)
 	IsEmailInUse(email string) (int64, string, error)
 	Delete(userExtId string) error

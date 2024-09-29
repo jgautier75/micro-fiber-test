@@ -114,12 +114,12 @@ func TestDao(t *testing.T) {
 	}
 	orgRepo := NewOrgDao(dbPool, kSql)
 	org := model.Organization{}
-	org.SetStatus(model.OrgStatusActive)
-	org.SetLabel("Test Org")
-	org.SetCode("test")
-	org.SetTenantId(1)
-	org.SetType(model.OrgTypeCommunity)
-	orgId, err := orgRepo.Create(&org)
+	org.Status = model.OrgStatusActive
+	org.Label = "Test Org"
+	org.Code = "test"
+	org.TenantId = 1
+	org.Type = model.OrgTypeCommunity
+	orgId, err := orgRepo.Create(org)
 	if err != nil {
 		fmt.Printf("pgError [%v]\n", err)
 	} else {
@@ -127,10 +127,10 @@ func TestDao(t *testing.T) {
 		fmt.Printf("orgId [%d]\n", orgId)
 	}
 
-	var orgs = make([]model.OrganizationInterface, 1)
+	var orgs = make([]model.Organization, 1)
 	orgs, err = orgRepo.FindAll(1)
 	for _, o := range orgs {
-		fmt.Printf("Created org label [%v]\n", o.GetLabel())
+		fmt.Printf("Created org label [%v]\n", o.Label)
 	}
 
 	fmt.Printf("Container logs: [%v]\n", logConsumer.Msgs)
