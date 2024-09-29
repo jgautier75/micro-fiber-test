@@ -132,7 +132,7 @@ func main() {
 	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, configuration.OAuthCallbackUrl, configuration.OAuthClientId, configuration.OAuthClientSecret, configuration.OAuthDebug))
 
 	go func() {
-		stdLogger.Info("Application -> ListenTLS")
+		stdLogger.Info("Application -> Listen TLS")
 		if errTls := app.ListenTLS(":"+configuration.ServerPort, "cert.pem", "key.pem"); errTls != nil {
 			panic(errTls)
 		}
