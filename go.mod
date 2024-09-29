@@ -1,8 +1,8 @@
 module micro-fiber-test
 
-go 1.21
+go 1.23
 
-toolchain go1.21.0
+toolchain go1.23.1
 
 require (
 	github.com/ansrivas/fiberprometheus/v2 v2.7.0
