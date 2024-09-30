@@ -8,16 +8,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/go-resty/resty/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/session"
 	"io"
 	"micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/exceptions"
 	"micro-fiber-test/pkg/model"
 	"net/url"
 	"strings"
-
-	"github.com/go-resty/resty/v2"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/session"
 )
 
 const (
@@ -25,7 +24,14 @@ const (
 	cVerifier  = "cverifier"
 )
 
-func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientId string, oauthClientSecret string, oauthDebug bool) func(ctx *fiber.Ctx) error {
+type GithubUserInfos struct {
+	Login string `json:"login,omitempty"`
+	Id    int64  `json:"id,omitempty"`
+	Email string `json:"email,omitempty"`
+	Name  string `json:"name,omitempty"`
+}
+
+func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientId string, oauthClientSecret string, oauthDebug bool, githubUserInfos string) func(ctx *fiber.Ctx) error {
 	return func(ctx *fiber.Ctx) error {
 
 		code := ctx.Query("code")
@@ -91,7 +97,16 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 			fmt.Printf("error session save [%s]", errSessionSave.Error())
 			return errSessionSave
 		}
-		return ctx.Redirect("/welcome.html?access_token=" + t.AccessToken)
+
+		userInfos, err := getUserInfos(githubUserInfos, t.AccessToken)
+		if err != nil {
+			return err
+		}
+
+		return ctx.Render("welcome", fiber.Map{
+			"userName": userInfos.Name,
+		})
+		//return ctx.Redirect("/welcome.html?access_token=" + t.AccessToken)
 	}
 }
 
@@ -190,4 +205,21 @@ func randomBytes(length int) ([]byte, error) {
 			}
 		}
 	}
+}
+
+func getUserInfos(githubUserInfos string, accessToken string) (GithubUserInfos, error) {
+	var nilUserInfos GithubUserInfos
+	client := resty.New()
+	client.SetCloseConnection(true)
+	resp, errGetUserInfos := client.R().SetHeader(fiber.HeaderAccept, "application/vnd.github.v3+json").SetHeader("Authorization", "Bearer "+accessToken).Get(githubUserInfos)
+	if errGetUserInfos != nil {
+		return nilUserInfos, errGetUserInfos
+	}
+	respData := resp.Body()
+	reader := bytes.NewReader(respData)
+	var t GithubUserInfos
+	if errDecode := json.NewDecoder(reader).Decode(&t); errDecode != nil {
+		return nilUserInfos, errDecode
+	}
+	return t, nil
 }
