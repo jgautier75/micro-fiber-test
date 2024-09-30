@@ -13,6 +13,7 @@ import (
 type Configuration struct {
 	ServerPort            string
 	TenantId              int64
+	GithubUserInfos       string
 	LogsMetrics           string
 	LogsStd               string
 	OAuthClientId         string
@@ -62,6 +63,7 @@ func LoadConfigFile(configPath string) *Configuration {
 		RedisPass:             kConfig.String("app.redisPass"),
 		BasicAuthUser:         kConfig.String("app.basicAuthUser"),
 		BasicAuthPass:         kConfig.String("app.basicAuthPass"),
+		GithubUserInfos:       kConfig.String("app.githubUserInfos"),
 	}
 	return &config
 }

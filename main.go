@@ -7,6 +7,7 @@ import (
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/session"
+	fiberHtml "github.com/gofiber/template/html/v2"
 	"github.com/knadh/koanf"
 	"github.com/knadh/koanf/parsers/toml"
 	"github.com/knadh/koanf/providers/file"
@@ -85,6 +86,7 @@ func main() {
 	defCfg := session.ConfigDefault
 	defCfg.Storage = redisStorage
 	store := session.New(defCfg)
+	htmlEngine := fiberHtml.New("./static", ".html")
 	fConfig := fiber.Config{
 		AppName:           "micro-fiber-test",
 		CaseSensitive:     true,
@@ -92,6 +94,7 @@ func main() {
 		EnablePrintRoutes: true,
 		UnescapePath:      true,
 		ErrorHandler:      defErrorHandler,
+		Views:             htmlEngine,
 	}
 
 	stdLogger.Info("Application -> Setup")
@@ -129,7 +132,7 @@ func main() {
 
 	// OAuth and authentication
 	app.Get("/api/v1/authenticate", endpoints.MakeGitlabAuthentication(store, configuration.OAuthGithub, configuration.OAuthClientId, configuration.OAuthRedirectUri))
-	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, configuration.OAuthCallbackUrl, configuration.OAuthClientId, configuration.OAuthClientSecret, configuration.OAuthDebug))
+	app.Get("/oauth/redirect", endpoints.MakeOAuthAuthorize(store, configuration.OAuthCallbackUrl, configuration.OAuthClientId, configuration.OAuthClientSecret, configuration.OAuthDebug, configuration.GithubUserInfos))
 
 	go func() {
 		stdLogger.Info("Application -> Listen TLS")
