@@ -12,6 +12,7 @@ import (
 )
 
 const BsTxId = "bsTxId"
+const DebugHeader = "x-log-debug"
 
 func NewHttpFilterLogger(zapLogger *zap.Logger) fiber.Handler {
 
@@ -56,7 +57,7 @@ func NewHttpFilterLogger(zapLogger *zap.Logger) fiber.Handler {
 		debugReq := false
 		reqHeaders := make([]string, 0)
 		for k, v := range c.GetReqHeaders() {
-			if strings.ToLower(k) == "x-log-debug" && v[0] == "1" {
+			if strings.ToLower(k) == DebugHeader && v[0] == "1" {
 				debugReq = true
 			}
 			reqHeaders = append(reqHeaders, k+"="+v[0])
@@ -66,7 +67,7 @@ func NewHttpFilterLogger(zapLogger *zap.Logger) fiber.Handler {
 			zapLogger.Info("HTTP",
 				zap.Field{Key: "method", Type: zapcore.StringType, String: c.Method()},
 				zap.Field{Key: "path", Type: zapcore.StringType, String: c.Path()},
-				zap.Field{Key: "ellapsed", Type: zapcore.Int64Type, Integer: duration.Milliseconds()},
+				zap.Field{Key: "elapsed", Type: zapcore.Int64Type, Integer: duration.Milliseconds()},
 				zap.Field{Key: "http.response.status", Type: zapcore.Int64Type, Integer: int64(c.Response().StatusCode())},
 				zap.Field{Key: "http.request.headers", Type: zapcore.StringType, String: strings.Join(reqHeaders, "&")},
 				zap.Field{Key: "http.request.body", Type: zapcore.StringType, String: string(c.Body())},
