@@ -15,14 +15,25 @@ import (
 	"micro-fiber-test/pkg/dto/commons"
 	"micro-fiber-test/pkg/exceptions"
 	"micro-fiber-test/pkg/model"
+	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
+	"time"
 )
 
 const (
 	oAuthState = "oauthstate"
 	cVerifier  = "cverifier"
 )
+
+var httpRetryFunction = func(client *resty.Client, resp *resty.Response) (time.Duration, error) {
+	if resp.StatusCode() == http.StatusTooManyRequests {
+		retryS, _ := strconv.Atoi(resp.Header().Get(fiber.HeaderRetryAfter))
+		return time.Duration(retryS) * time.Second, nil
+	}
+	return 0, errors.New("rate limit exceeded")
+}
 
 type GithubUserInfos struct {
 	Login string `json:"login,omitempty"`
@@ -76,7 +87,7 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 		client.SetDebug(oauthDebug)
 		client.SetCloseConnection(true)
 
-		resp, errOAuth := client.R().SetHeader(fiber.HeaderAccept, fiber.MIMEApplicationJSON).Post(reqURL)
+		resp, errOAuth := client.SetRetryAfter(httpRetryFunction).R().SetHeader(fiber.HeaderAccept, fiber.MIMEApplicationJSON).Post(reqURL)
 		if errOAuth != nil {
 			apiError := exceptions.ConvertToFunctionalError(errOAuth, fiber.StatusConflict)
 			_ = ctx.SendStatus(fiber.StatusConflict)
@@ -106,7 +117,6 @@ func MakeOAuthAuthorize(store *session.Store, oauthCallback string, oAuthClientI
 		return ctx.Render("welcome", fiber.Map{
 			"userName": userInfos.Name,
 		})
-		//return ctx.Redirect("/welcome.html?access_token=" + t.AccessToken)
 	}
 }
 
@@ -211,7 +221,9 @@ func getUserInfos(githubUserInfos string, accessToken string) (GithubUserInfos, 
 	var nilUserInfos GithubUserInfos
 	client := resty.New()
 	client.SetCloseConnection(true)
-	resp, errGetUserInfos := client.R().SetHeader(fiber.HeaderAccept, "application/vnd.github.v3+json").SetHeader("Authorization", "Bearer "+accessToken).Get(githubUserInfos)
+	client.SetRetryAfter(httpRetryFunction)
+	authHeader := fmt.Sprintf("Bearer %s", accessToken)
+	resp, errGetUserInfos := client.R().SetHeader(fiber.HeaderAccept, "application/vnd.github.v3+json").SetHeader(fiber.HeaderAuthorization, authHeader).Get(githubUserInfos)
 	if errGetUserInfos != nil {
 		return nilUserInfos, errGetUserInfos
 	}
