@@ -7,7 +7,7 @@ toolchain go1.23.1
 require (
 	github.com/ansrivas/fiberprometheus/v2 v2.7.0
 	github.com/go-playground/validator v9.31.0+incompatible
-	github.com/go-resty/resty/v2 v2.16.0
+	github.com/go-resty/resty/v2 v2.16.2
 	github.com/gofiber/fiber/v2 v2.52.5
 	github.com/gofiber/storage/redis v1.3.4
 	github.com/gofiber/template/html/v2 v2.1.2
@@ -93,7 +93,7 @@ require (
 	golang.org/x/text v0.20.0 // indirect
 	google.golang.org/genproto v0.0.0-20221027153422-115e99e71e1c // indirect
 	google.golang.org/grpc v1.50.1 // indirect
-	google.golang.org/protobuf v1.35.1 // indirect
+	google.golang.org/protobuf v1.35.2 // indirect
 	gopkg.in/go-playground/assert.v1 v1.2.1 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
