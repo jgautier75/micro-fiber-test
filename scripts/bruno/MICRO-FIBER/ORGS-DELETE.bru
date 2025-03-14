@@ -1,0 +1,17 @@
+meta {
+  name: ORGS-DELETE
+  type: http
+  seq: 6
+}
+
+delete {
+  url: {{httpScheme}}:{{httpHost}}/{{baseUri}}/organizations/457f7e90-cd8e-4c74-a1c4-8296a724a919
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "label": "Rennes-01"
+  }
+}

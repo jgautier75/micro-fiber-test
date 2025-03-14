@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "MICRO-FIBER",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

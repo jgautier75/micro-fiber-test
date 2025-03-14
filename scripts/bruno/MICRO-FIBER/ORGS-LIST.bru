@@ -1,0 +1,11 @@
+meta {
+  name: ORGS-LIST
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{httpScheme}}:{{httpHost}}/{{baseUri}}/organizations
+  body: none
+  auth: none
+}

@@ -1,0 +1,19 @@
+meta {
+  name: ORGS-CREATE
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{httpScheme}}:{{httpHost}}/{{baseUri}}/organizations
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "label": "Rennes",
+    "type": "community",
+    "status": 1
+  }
+}
