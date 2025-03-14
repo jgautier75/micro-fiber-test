@@ -46,7 +46,7 @@ Build:
 
 **CONFIGURATION**
 
-Location: config/config.yaml
+Location: config/config-test.yaml
 
 - PostgreSQL:
   - pgUrl: connection url (e.g: postgres://${user}:${password}@${host}:${5433}/${database})
@@ -72,3 +72,15 @@ Location: config/config.yaml
   - metricsPath: Prometheus exposition path (Defaults to "/metrics")
   - basicAuthUser: Basic authentication user for metrics endpoint
   - basicAuthPass: Basic authentication password for metrics endpoint
+
+
+**GitLeak**
+
+Git leak https://github.com/gitleaks/gitleaks
+
+Removing a file from all history:
+
+```bash
+git filter-branch --tree-filter 'rm -f <path_to_file>' HEAD
+git push origin --force --all
+```
