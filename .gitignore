@@ -5,3 +5,4 @@
 /.idea/sqldialects.xml
 /access.log
 micro-fiber-test.log
+config/config-test.yaml
