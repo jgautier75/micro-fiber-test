@@ -3,14 +3,6 @@ package main
 import (
 	"errors"
 	"fmt"
-	"github.com/ansrivas/fiberprometheus/v2"
-	"github.com/gofiber/fiber/v2"
-	"github.com/gofiber/fiber/v2/middleware/basicauth"
-	"github.com/gofiber/fiber/v2/middleware/session"
-	fiberHtml "github.com/gofiber/template/html/v2"
-	"github.com/knadh/koanf"
-	"github.com/knadh/koanf/parsers/toml"
-	"github.com/knadh/koanf/providers/file"
 	"micro-fiber-test/pkg/config"
 	"micro-fiber-test/pkg/exceptions"
 	endpoints "micro-fiber-test/pkg/handlers"
@@ -22,6 +14,15 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/ansrivas/fiberprometheus/v2"
+	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/basicauth"
+	"github.com/gofiber/fiber/v2/middleware/session"
+	fiberHtml "github.com/gofiber/template/html/v2"
+	"github.com/knadh/koanf"
+	"github.com/knadh/koanf/parsers/toml"
+	"github.com/knadh/koanf/providers/file"
 )
 
 const V1Root = "/api/v1"
@@ -35,7 +36,7 @@ const UsersV1UserId = UsersV1Root + "/:userId"
 func main() {
 
 	// Load config file
-	configuration := config.LoadConfigFile("config/config.yaml")
+	configuration := config.LoadConfigFile("config/config-test.yaml")
 
 	// Setup loggers
 	accessLogger := logging.ConfigureLogger(configuration.LogsMetrics, false, false)
